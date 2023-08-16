@@ -1,5 +1,6 @@
 Example Usage
 =============
+First check that `apps.py` has the right configuration. Notably the `working_directory`.
 ```bash
 git clone https://github.com/robinchew/eluthia.git
 cd eluthia

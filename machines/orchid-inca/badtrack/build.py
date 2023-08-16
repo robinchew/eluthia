@@ -1,3 +1,6 @@
+from eluthia.decorators import file
+
+@file
 def postinst(package_name, apps):
     return f'''\
         #!/bin/bash
@@ -9,6 +12,7 @@ def postinst(package_name, apps):
         systemctl start {package_name}
     '''
 
+@file
 def control(package_name, apps):
     return f'''\
         Package: {package_name}
@@ -22,6 +26,7 @@ def control(package_name, apps):
         Description: Badtrack is a sample package
     '''
 
+@file
 def systemd_service(package_name, apps):
     return f'''\
         [Unit]

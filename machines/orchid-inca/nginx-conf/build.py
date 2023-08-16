@@ -1,3 +1,6 @@
+from eluthia.decorators import file
+
+@file
 def postinst(package_name, apps):
     return f'''\
 #!/bin/bash
@@ -12,7 +15,7 @@ def get_package_tree(package_name, apps):
         'etc': {
             'nginx': {
                 'sites-enabled': {
-                    'deployed': lambda a, b: '',
+                    'deployed': file(lambda a, b: ''),
                 },
             },
         },

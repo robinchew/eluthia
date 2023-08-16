@@ -11,16 +11,6 @@ def get_builds():
         except ModuleNotFoundError:
             pass
 
-def walk(tree, args):
-    if type(tree) is dict:
-        return {
-            k: walk(v, args)
-            for k, v in tree.items()
-        }
-    if callable(tree):
-        return dedent(tree(*args))
-    return tree
-
 def flatten_paths(d, l = ()):
     if type(d) is dict:
         return [
@@ -44,8 +34,8 @@ if __name__ == '__main__':
         args = (package_name, apps.apps)
         tree = build.get_package_tree(*args)
 
-        for path, content in flatten_lists(flatten_paths(walk(tree, args))):
+        for path, content in flatten_lists(flatten_paths(tree)):
             full_path = (build_folder, package_name, *path)
             os.makedirs(os.path.join(*full_path[0:-1]), exist_ok=True)
             with open(os.path.join(*full_path), 'w') as f:
-                f.write(content)
+                f.write(content(*args))

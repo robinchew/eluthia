@@ -1,4 +1,5 @@
 from functools import wraps
+from textwrap import dedent
 import os
 
 def file(func):
@@ -7,5 +8,5 @@ def file(func):
         os.makedirs(os.path.join(*full_path[0:-1]), exist_ok=True)
         content = func(*args, **kwargs)
         with open(os.path.join(*full_path), 'w') as f:
-            f.write(content)
+            f.write(dedent(content))
     return wrapper

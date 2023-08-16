@@ -4,14 +4,9 @@ from importlib.machinery import SourceFileLoader
 import os
 from textwrap import dedent
 
-HERE = os.path.abspath(os.path.dirname(__file__))
-
 def get_builds(folder):
     for package_name in os.listdir(folder):
-        try:
-            yield package_name, importlib.import_module(package_name + '.build')
-        except ModuleNotFoundError:
-            pass
+        yield package_name, SourceFileLoader("machine", os.path.join(folder, package_name, 'build.py')).load_module()
 
 def flatten_paths(d, l = ()):
     if type(d) is dict:
@@ -32,7 +27,7 @@ if __name__ == '__main__':
     apps = SourceFileLoader("apps", os.environ['APPS_PY']).load_module()
     build_folder = os.environ['BUILD_FOLDER']
 
-    for package_name, build in get_builds(HERE):
+    for package_name, build in get_builds(os.environ['MACHINE_FOLDER']):
         args = (package_name, apps.apps)
         tree = build.get_package_tree(*args)
 

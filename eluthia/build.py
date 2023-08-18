@@ -2,6 +2,7 @@ from functools import reduce
 import importlib
 from importlib.machinery import SourceFileLoader
 import os
+import tempfile
 from textwrap import dedent
 
 def get_builds(folder):
@@ -23,9 +24,14 @@ def flatten_lists(l):
         l,
         [])
 
+def get_temp_folder():
+    with tempfile.TemporaryDirectory() as folder:
+        return folder
+
 if __name__ == '__main__':
     apps = SourceFileLoader("apps", os.environ['APPS_PY']).load_module()
-    build_folder = os.environ['BUILD_FOLDER']
+    build_folder = os.environ['BUILD_FOLDER'] if 'BUILD_FOLDER' in os.environ else get_temp_folder()
+    print('Build_folder:', build_folder)
 
     for package_name, build in get_builds(os.environ['MACHINE_FOLDER']):
         args = (package_name, apps.apps)

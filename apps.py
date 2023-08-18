@@ -1,13 +1,15 @@
 from collections import namedtuple
 
-App = namedtuple('App', ('working_folder', 'version', 'port'))
+machines = './machines/orchid-inca'
+
+App = namedtuple('App', ('folder', 'version', 'port'))
 
 app_config = {
     'badtrack': {
-        'working_folder': '/home/robin/work/badtrack',
+        'folder': '/home/robin/work/badtrack',
     },
     'fuel': {
-        'working_folder': '/home/robin/work/fueltrack',
+        'folder': '/home/robin/work/fueltrack',
     },
 }
 

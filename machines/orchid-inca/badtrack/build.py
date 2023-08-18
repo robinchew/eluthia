@@ -1,4 +1,4 @@
-from eluthia.decorators import file
+from eluthia.decorators import copy_folder, file
 
 @file
 def postinst(package_name, apps):
@@ -53,6 +53,13 @@ def get_package_tree(package_name, apps):
                 'system': {
                     f'{package_name}.service': systemd_service,
                 },
+            },
+        },
+        'usr': {
+            'local': {
+                'bin': {
+                    'badtrack': copy_folder(apps[package_name].folder),
+                }
             },
         },
     }

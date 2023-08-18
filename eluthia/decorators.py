@@ -1,6 +1,7 @@
 from functools import wraps
 from textwrap import dedent
 import os
+import shutil
 
 def file(func):
     @wraps(func)
@@ -10,3 +11,10 @@ def file(func):
         with open(os.path.join(*full_path), 'w') as f:
             f.write(dedent(content))
     return wrapper
+
+def copy_folder(from_folder):
+    def copy_to(full_path, *args):
+        shutil.copytree(
+            from_folder,
+            os.path.join(*full_path))
+    return copy_to

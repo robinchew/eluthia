@@ -2,6 +2,7 @@ from functools import wraps
 from textwrap import dedent
 import os
 import shutil
+from sh import git
 
 def file(func):
     @wraps(func)
@@ -18,3 +19,8 @@ def copy_folder(from_folder):
             from_folder,
             os.path.join(*full_path))
     return copy_to
+
+def git_clone(git_folder):
+    def clone_to(full_path_list, *args):
+        git.clone(git_folder, os.path.join(*full_path_list))
+    return clone_to

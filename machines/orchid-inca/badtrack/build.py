@@ -1,4 +1,4 @@
-from eluthia.decorators import copy_folder, file
+from eluthia.decorators import copy_folder, file, git_clone
 
 @file
 def postinst(package_name, apps):
@@ -58,7 +58,7 @@ def get_package_tree(package_name, apps):
         'usr': {
             'local': {
                 'bin': {
-                    'badtrack': copy_folder(apps[package_name].folder),
+                    'badtrack': git_clone(apps[package_name].folder),
                 }
             },
         },

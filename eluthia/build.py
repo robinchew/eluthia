@@ -1,9 +1,13 @@
+from collections import namedtuple
 from functools import reduce
 import importlib
 from importlib.machinery import SourceFileLoader
 import os
 import tempfile
 from textwrap import dedent
+from sh import git, pushd, ErrorReturnCode_128
+
+App = namedtuple('App', ('folder', 'version', 'port'))
 
 def get_builds(folder):
     for package_name in os.listdir(folder):
@@ -28,13 +32,28 @@ def get_temp_folder():
     with tempfile.TemporaryDirectory() as folder:
         return folder
 
+def build_app(app):
+    with pushd(app['folder']):
+        try:
+            version = git('describe', '--tags').strip()
+        except ErrorReturnCode_128:
+            version = '0.0.0'
+    return App(**{
+        **app,
+        'version': version,
+        'port': 9999,
+    })
+
 if __name__ == '__main__':
     apps = SourceFileLoader("apps", os.environ['APPS_PY']).load_module()
     build_folder = os.environ['BUILD_FOLDER'] if 'BUILD_FOLDER' in os.environ else get_temp_folder()
     print('Build_folder:', build_folder)
 
     for package_name, build in get_builds(os.environ['MACHINE_FOLDER']):
-        args = (package_name, apps.apps)
+        args = (package_name, {
+            name: build_app(d)
+            for name, d in apps.config.items()
+        })
         tree = build.get_package_tree(*args)
 
         for path, f in flatten_lists(flatten_paths(tree)):

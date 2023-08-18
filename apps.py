@@ -1,24 +1,8 @@
-from collections import namedtuple
-
-machines = './machines/orchid-inca'
-
-App = namedtuple('App', ('folder', 'version', 'port'))
-
-app_config = {
+config = {
     'badtrack': {
-        'folder': '/home/robin/work/badtrack',
+        'folder': '../badtrack',
     },
     'fuel': {
-        'folder': '/home/robin/work/fueltrack',
+        'folder': '../fueltrack',
     },
-}
-
-
-apps = {
-    name: App(**{
-        **d,
-        'version': '',
-        'port': 9999,
-    })
-    for name, d in app_config.items()
 }

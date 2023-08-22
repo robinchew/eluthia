@@ -4,6 +4,16 @@ import os
 import shutil
 from sh import git
 
+def chmod(octal):
+    def decorate(func):
+        @wraps(func)
+        def wrapper(full_path, *args, **kwargs):
+            res = func(full_path, *args, **kwargs)
+            os.chmod(os.path.join(*full_path), octal)
+            return res
+        return wrapper
+    return decorate
+
 def file(func):
     @wraps(func)
     def wrapper(full_path, *args, **kwargs):

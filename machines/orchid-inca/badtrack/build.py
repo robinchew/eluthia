@@ -1,5 +1,6 @@
-from eluthia.decorators import copy_folder, file, git_clone
+from eluthia.decorators import chmod, copy_folder, file, git_clone
 
+@chmod(0o755)
 @file
 def postinst(package_name, apps):
     return f'''\

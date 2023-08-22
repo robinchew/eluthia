@@ -34,10 +34,7 @@ def get_temp_folder():
 
 def build_app(app):
     with pushd(app['folder']):
-        try:
-            version = git('describe', '--tags').strip()
-        except ErrorReturnCode_128:
-            version = '0.0.0'
+        version = git('rev-list', '--count', 'HEAD').strip() + '-' + git('rev-parse', '--short', 'HEAD').strip()
     return App(**{
         **app,
         'version': version,

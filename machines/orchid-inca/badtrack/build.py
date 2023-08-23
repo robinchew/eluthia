@@ -2,7 +2,7 @@ from eluthia.decorators import chmod, copy_folder, file, git_clone
 
 @chmod(0o755)
 @file
-def postinst(package_name, apps):
+def postinst(full_path, package_name, apps):
     return f'''\
         #!/bin/bash
         # Reload the systemd daemon to recognize the new service file
@@ -14,7 +14,7 @@ def postinst(package_name, apps):
     '''
 
 @file
-def control(package_name, apps):
+def control(full_path, package_name, apps):
     return f'''\
         Package: {package_name}
         Version: {apps[package_name].version}
@@ -28,7 +28,7 @@ def control(package_name, apps):
     '''
 
 @file
-def systemd_service(package_name, apps):
+def systemd_service(full_path, package_name, apps):
     return f'''\
         [Unit]
         Description=BadTrack Service

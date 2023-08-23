@@ -1,7 +1,7 @@
 from eluthia.decorators import file
 
 @file
-def postinst(package_name, apps):
+def postinst(full_path, package_name, apps):
     return f'''\
 #!/bin/bash
 systemctl reload nginx
@@ -15,7 +15,7 @@ def get_package_tree(package_name, apps):
         'etc': {
             'nginx': {
                 'sites-enabled': {
-                    'deployed': file(lambda a, b: ''),
+                    'deployed': file(lambda path, package, apps: ''),
                 },
             },
         },

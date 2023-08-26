@@ -3,7 +3,7 @@ import os
 
 @chmod(0o755)
 @file
-def postinst(package_name, apps):
+def postinst(full_path, package_name, apps):
     return f'''\
         #!/bin/bash
         # Set ownership of secrets.env to badtrackuser
@@ -12,7 +12,7 @@ def postinst(package_name, apps):
     '''
 
 @file
-def control(package_name, apps):
+def control(full_path, package_name, apps):
     return f'''\
         Package: {package_name}
         Version: {apps[package_name].version}
@@ -27,7 +27,7 @@ def control(package_name, apps):
 
 @chmod(0o600)
 @file
-def secrets(package_name, apps):
+def secrets(full_path, package_name, apps):
     return f'''\
         EMAIL_USER = {os.environ['EMAIL_USER']}
         EMAIL_PASSWORD = {os.environ['EMAIL_PASSWORD']}

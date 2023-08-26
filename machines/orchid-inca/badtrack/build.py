@@ -51,7 +51,7 @@ def get_package_tree(package_name, apps):
     return {
         'DEBIAN': {
             'postinst': postinst,
-            'control': file(lambda f, p, a: control(f, p, a) + '\nDescription: Badtrack!'),
+            'control': file(lambda f, p, a: control(f, p, a) + '\nDescription: Badtrack!\n'),
         },
         'etc': {
             'systemd': {

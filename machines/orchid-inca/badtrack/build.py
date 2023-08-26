@@ -1,4 +1,5 @@
 from eluthia.decorators import chmod, copy_folder, file, git_clone
+from eluthia.defaults import control
 
 @chmod(0o755)
 @file
@@ -11,20 +12,6 @@ def postinst(full_path, package_name, apps):
         # Enable and start the service
         systemctl enable {package_name}
         systemctl start {package_name}
-    '''
-
-@file
-def control(full_path, package_name, apps):
-    return f'''\
-        Package: {package_name}
-        Version: {apps[package_name].version}
-        Section: custom
-        Priority: optional
-        Architecture: all
-        Essential: no
-        # Installed-Size: 1024
-        Maintainer: Your Name <your-email@example.com>
-        Description: Badtrack is a sample package
     '''
 
 @file
@@ -47,7 +34,7 @@ def get_package_tree(package_name, apps):
     return {
         'DEBIAN': {
             'postinst': postinst,
-            'control': control,
+            'control': file(lambda f, p, a: control(f, p, a) + '\nDescription: Badtrack!'),
         },
         'etc': {
             'systemd': {

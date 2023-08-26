@@ -6,6 +6,7 @@ import os
 import tempfile
 from textwrap import dedent
 from sh import git, pushd, ErrorReturnCode_128
+import subprocess
 
 App = namedtuple('App', ('folder', 'version', 'port'))
 
@@ -56,3 +57,8 @@ if __name__ == '__main__':
         for path, f in flatten_lists(flatten_paths(tree)):
             full_path = (build_folder, package_name, *path)
             f(full_path, *args)
+        
+        # I'm not sure if nginx-conf is meant to be packaged, but it doesn't have a control file so it can't be. This ensures that
+        # it isn't packaged, which would cause an error.
+        if package_name in apps.config.keys():
+            subprocess.run(["dpkg-deb", "--build", f"{build_folder}/{package_name}"],check=True)

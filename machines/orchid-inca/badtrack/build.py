@@ -1,6 +1,9 @@
+import os
+
 from eluthia.decorators import chmod, copy_folder, file, git_clone
 from eluthia.defaults import control
-import os
+from eluthia.functional import pipe
+from eluthia.py_configs import deb822
 
 is_test = 'TEST_MODE' in os.environ
 
@@ -51,7 +54,10 @@ def get_package_tree(package_name, apps):
     return {
         'DEBIAN': {
             'postinst': postinst,
-            'control': file(lambda f, p, a: control(f, p, a) + '\nDescription: Badtrack!\n'),
+            'control': file(pipe(
+                control,
+                lambda d: {**d, 'Description': 'Badtrack!'},
+                deb822)),
         },
         'etc': {
             'systemd': {

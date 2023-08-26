@@ -55,6 +55,12 @@ def get_package_tree(package_name, apps):
         'DEBIAN': {
             'postinst': postinst,
             'control': file(pipe(
+                # @file
+                # def custom_control(file_path, package_name, apps):
+                #    return deb822({
+                #        **control(file_path, package_name, apps),
+                #        'Description': 'Badtrack!',
+                #    })
                 control,
                 lambda d: {**d, 'Description': 'Badtrack!'},
                 deb822)),

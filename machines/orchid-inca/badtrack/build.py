@@ -63,7 +63,7 @@ def get_package_tree(package_name, apps):
         'usr': {
             'local': {
                 'bin': {
-                    'badtrack': copy_folder('/home/ystaggl/Workspace/badtrack') if is_test else git_clone(apps[package_name].folder),
+                    'badtrack': copy_folder('/home/ystaggl/Workspace/badtrack') if is_test else git_clone(apps[package_name]['folder']),
                 }
             },
         },

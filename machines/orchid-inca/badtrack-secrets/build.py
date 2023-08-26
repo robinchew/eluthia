@@ -15,7 +15,7 @@ def postinst(full_path, package_name, apps):
 def control(full_path, package_name, apps):
     return f'''\
         Package: {package_name}
-        Version: {apps[package_name].version}
+        Version: {apps[package_name]['version']}
         Section: custom
         Priority: optional
         Architecture: all

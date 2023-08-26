@@ -1,4 +1,3 @@
-from collections import namedtuple
 from functools import reduce
 import importlib
 from importlib.machinery import SourceFileLoader
@@ -7,8 +6,6 @@ import tempfile
 from textwrap import dedent
 from sh import git, pushd, ErrorReturnCode_128
 import subprocess
-
-App = namedtuple('App', ('folder', 'version', 'port'))
 
 def get_builds(folder):
     for package_name in os.listdir(folder):
@@ -36,11 +33,11 @@ def get_temp_folder():
 def build_app(app):
     with pushd(app['folder']):
         version = git('rev-list', '--count', 'HEAD').strip() + '-' + git('rev-parse', '--short', 'HEAD').strip()
-    return App(**{
+    return {
         **app,
         'version': version,
         'port': 9999,
-    })
+    }
 
 if __name__ == '__main__':
     apps = SourceFileLoader("apps", os.environ['APPS_PY']).load_module()
@@ -61,4 +58,5 @@ if __name__ == '__main__':
         # I'm not sure if nginx-conf is meant to be packaged, but it doesn't have a control file so it can't be. This ensures that
         # it isn't packaged, which would cause an error.
         if package_name in apps.config.keys():
-            subprocess.run(["dpkg-deb", "--build", f"{build_folder}/{package_name}"],check=True)
+            #subprocess.run(["dpkg-deb", "--build", f"{build_folder}/{package_name}"],check=True)
+            pass

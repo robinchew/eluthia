@@ -5,4 +5,7 @@ config = {
     'fuel': {
         'folder': '../fueltrack',
     },
+    'badtrack-secrets': {
+        'folder': '../badtrack'
+    },
 }

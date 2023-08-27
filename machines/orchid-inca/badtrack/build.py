@@ -32,7 +32,6 @@ def systemd_service(full_path, package_name, apps):
         ExecStart=/usr/bin/python3 /usr/local/bin/badtrack/main.py
         Environment=HISTORY_FOLDER=/var/lib/badtrack/history
         Environment=CACHE_FOLDER=/var/lib/badtrack/cache
-        #Environment variables with get() can optionally be set for testing.
         Environment=EMAIL_HOST={apps[package_name]['env']['EMAIL_HOST']}
         Environment=EMAIL_PORT={apps[package_name]['env']['EMAIL_PORT']}
         Environment=EMAIL_FROM={apps[package_name]['env']['EMAIL_FROM']}

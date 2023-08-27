@@ -34,3 +34,14 @@ def git_clone(git_folder):
     def clone_to(full_path_list, *args, **kwargs):
         git.clone(git_folder, os.path.join(*full_path_list))
     return clone_to
+
+def empty_folder(full_path, package_name, apps):
+    os.makedirs(os.path.join(*full_path), exist_ok=True)
+    return
+
+# This is so that I can specify using local files when testing (Replaces where I previously had my path hardcoded).
+# For now the environment variable isn't in apps.py because it's not package specific. I could add a generic env field for all packages though
+def source_app(folder_path):
+    if os.environ.get('APP_SOURCE').lower() == 'local':
+        return copy_folder(folder_path)
+    return git_clone(folder_path)

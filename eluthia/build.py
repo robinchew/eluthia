@@ -41,7 +41,7 @@ def build_app(app):
 
 if __name__ == '__main__':
     apps = SourceFileLoader("apps", os.environ['APPS_PY']).load_module()
-    build_folder = os.environ['BUILD_FOLDER'] if 'BUILD_FOLDER' in os.environ else get_temp_folder()
+    build_folder = os.environ.get('BUILD_FOLDER', get_temp_folder())
     print('Build_folder:', build_folder)
 
     for package_name, build in get_builds(os.environ['MACHINE_FOLDER']):
@@ -55,8 +55,5 @@ if __name__ == '__main__':
             full_path = (build_folder, package_name, *path)
             f(full_path, *args)
         
-        # I'm not sure if nginx-conf is meant to be packaged, but it doesn't have a control file so it can't be. This ensures that
-        # it isn't packaged, which would cause an error.
-        if package_name in apps.config.keys():
-            #subprocess.run(["dpkg-deb", "--build", f"{build_folder}/{package_name}"],check=True)
-            pass
+        if os.environ['SKIP_DEB'].lower() != "true":
+            subprocess.run(["dpkg-deb", "--build", f"{build_folder}/{package_name}"],check=True)

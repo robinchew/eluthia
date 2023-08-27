@@ -7,8 +7,12 @@ def app_working_folder(full_path, package_name, apps):
         os.path.join(*full_path))
 
 def control(full_path, package_name, apps):
+    try: 
+        version = apps[package_name]['version']
+    except KeyError:
+        version = 0
     return {
         'Package': package_name,
-        'Version': apps[package_name]['version'],
+        'Version': version,
         'Architecture': 'all',
     }

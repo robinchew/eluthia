@@ -19,4 +19,7 @@ config = {
             'EMAIL_USER': os.environ['EMAIL_USER'],
         },
     },
+    'nginx-conf': {
+        'folder': '../nginx-conf'
+    }
 }

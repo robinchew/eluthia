@@ -30,12 +30,17 @@ def get_temp_folder():
     with tempfile.TemporaryDirectory() as folder:
         return folder
 
+def get_git_version(folder):
+    with pushd(folder):
+        try:
+            return git('rev-list', '--count', 'HEAD').strip() + '-' + git('rev-parse', '--short', 'HEAD').strip()
+        except ErrorReturnCode_128:
+            pass
+
 def build_app(app):
-    with pushd(app['folder']):
-        version = git('rev-list', '--count', 'HEAD').strip() + '-' + git('rev-parse', '--short', 'HEAD').strip()
     return {
         **app,
-        'version': version,
+        'version': app.get('version', get_git_version(app['folder']) or 0),
         'port': 9999,
     }
 

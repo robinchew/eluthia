@@ -1,11 +1,8 @@
-import os
-
-from eluthia.decorators import chmod, copy_folder, file, git_clone
+from eluthia.decorators import chmod, copy_folder, file, git_clone, empty_folder
 from eluthia.defaults import control
 from eluthia.functional import pipe
 from eluthia.py_configs import deb822
 
-is_test = 'TEST_MODE' in os.environ
 
 @chmod(0o755)
 @file
@@ -35,20 +32,14 @@ def systemd_service(full_path, package_name, apps):
         ExecStart=/usr/bin/python3 /usr/local/bin/badtrack/main.py
         Environment=HISTORY_FOLDER=/var/lib/badtrack/history
         Environment=CACHE_FOLDER=/var/lib/badtrack/cache
-        #This is to allow for testing.
-        Environment=EMAIL_HOST={'localhost' if is_test else 'relay.mailbaby.net'}
-        Environment=EMAIL_PORT={'1025' if is_test else '465'}
-        Environment=EMAIL_FROM=sender@obsi.com.au
-        Environment=EMAIL_TO={'yannstaggl@gmail.com' if is_test else 'robinchew@gmail.com'}
+        Environment=EMAIL_HOST={apps[package_name]['env']['EMAIL_HOST']}
+        Environment=EMAIL_PORT={apps[package_name]['env']['EMAIL_PORT']}
+        Environment=EMAIL_FROM={apps[package_name]['env']['EMAIL_FROM']}
+        Environment=EMAIL_TO={apps[package_name]['env']['EMAIL_TO']}
         EnvironmentFile=/var/lib/badtrack/secrets.env
         [Install]
         WantedBy=multi-user.target
     '''
-
-# I think it'd be better if this was somewhere else and then could be imported in, but I wasn't sure where to put it. 
-def blank_folder(full_path, package_name, apps):
-    os.makedirs(os.path.join(*full_path), exist_ok=True)
-    return
 
 def get_package_tree(package_name, apps):
     return {
@@ -75,15 +66,15 @@ def get_package_tree(package_name, apps):
         'usr': {
             'local': {
                 'bin': {
-                    'badtrack': copy_folder('/home/ystaggl/Workspace/badtrack') if is_test else git_clone(apps[package_name]['folder']),
+                    'badtrack': git_clone(apps[package_name]['folder']),
                 }
             },
         },
-        'var':{
-            'lib':{
+        'var': {
+            'lib': {
                 'badtrack': {
-                    'history': blank_folder,
-                    'cache': blank_folder,
+                    'history': empty_folder,
+                    'cache': empty_folder,
                 }
             }
         }

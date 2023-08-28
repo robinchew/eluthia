@@ -34,3 +34,7 @@ def git_clone(git_folder):
     def clone_to(full_path_list, *args, **kwargs):
         git.clone(git_folder, os.path.join(*full_path_list))
     return clone_to
+
+def empty_folder(full_path, package_name, apps):
+    os.makedirs(os.path.join(*full_path), exist_ok=True)
+    return

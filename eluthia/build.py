@@ -51,9 +51,10 @@ if __name__ == '__main__':
     build_folder = os.environ.get('BUILD_FOLDER', get_temp_folder())
     print('Build_folder:', build_folder)
 
+    #TODO: I know all of this is not the right way to implement this, but I'm not 100% sure what the right way is
     if os.environ['SKIP_DEB'].lower() != "true":
         os.makedirs(f'{build_folder}/zipapp/', exist_ok=True)
-        shutil.copy(f'{build_folder}/../eluthia/archive_script.py', f'{build_folder}/zipapp/__main__.py')
+        shutil.copy(f'{os.path.abspath(os.path.dirname(__file__))}/zipapp_script.py', f'{build_folder}/zipapp/__main__.py')
 
     for package_name, build in get_builds(os.environ['MACHINE_FOLDER']):
         args = (package_name, {
@@ -70,6 +71,7 @@ if __name__ == '__main__':
             subprocess.run(["dpkg-deb", "--build", f"{build_folder}/{package_name}"],check=True)
             shutil.copy(f'{build_folder}/{package_name}.deb', f'{build_folder}/zipapp/{package_name}.deb')
     
+    #TODO: I know all of this is not the right way to implement this, but I'm not 100% sure what the right way is
     if os.environ['SKIP_DEB'].lower() != "true":
-        zipapp.create_archive(f'{build_folder}/zipapp',f'{build_folder}/zipapp.pyz','/usr/bin/python3')
-        subprocess.run(['chmod','+x',f'{build_folder}/zipapp.pyz'])
+        zipapp.create_archive(f'{build_folder}/zipapp', f'{build_folder}/zipapp.pyz', '/usr/bin/python3')
+        subprocess.run(['chmod', '+x', f'{build_folder}/zipapp.pyz'])

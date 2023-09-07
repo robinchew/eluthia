@@ -4,9 +4,12 @@ With the included configuration in `apps.py`, the app Git repositories `badtrack
 ```bash
 git clone https://github.com/robinchew/eluthia.git
 cd eluthia
-PYTHONPATH=. MACHINE_FOLDER=./machines/orchid-inca APPS_PY=./apps.py python3 eluthia/build.py
-cd build
+EMAIL_USER=. EMAIL_PASSWORD=. PYTHONPATH=. MACHINE_FOLDER=./machines/orchid-inca APPS_PY=./apps.py python3 eluthia/build.py
+```
+Build folder defaults to an auto-generated temporary directory. Use `BUILD_FOLDER=my_build` to specify a folder.
+
+You can look at the content of the build folder by:
+```bash
+cd my_build
 tree
 ```
-Build folder defaults to an auto-generated temporary directory. Use `BUILD_FOLDER=` to specify a folder.
-

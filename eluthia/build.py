@@ -1,4 +1,3 @@
-from collections import namedtuple
 from functools import reduce
 import importlib
 from importlib.machinery import SourceFileLoader
@@ -7,8 +6,6 @@ import tempfile
 from textwrap import dedent
 from sh import git, pushd, ErrorReturnCode_128
 import subprocess
-
-App = namedtuple('App', ('folder', 'version', 'port'))
 
 def get_builds(folder):
     for package_name in os.listdir(folder):
@@ -33,18 +30,23 @@ def get_temp_folder():
     with tempfile.TemporaryDirectory() as folder:
         return folder
 
+def get_git_version(folder):
+    with pushd(folder):
+        try:
+            return git('rev-list', '--count', 'HEAD').strip() + '-' + git('rev-parse', '--short', 'HEAD').strip()
+        except ErrorReturnCode_128:
+            pass
+
 def build_app(app):
-    with pushd(app['folder']):
-        version = git('rev-list', '--count', 'HEAD').strip() + '-' + git('rev-parse', '--short', 'HEAD').strip()
-    return App(**{
+    return {
         **app,
-        'version': version,
+        'version': app.get('version', get_git_version(app['folder']) or 0),
         'port': 9999,
-    })
+    }
 
 if __name__ == '__main__':
     apps = SourceFileLoader("apps", os.environ['APPS_PY']).load_module()
-    build_folder = os.environ['BUILD_FOLDER'] if 'BUILD_FOLDER' in os.environ else get_temp_folder()
+    build_folder = os.environ.get('BUILD_FOLDER', get_temp_folder())
     print('Build_folder:', build_folder)
 
     for package_name, build in get_builds(os.environ['MACHINE_FOLDER']):
@@ -58,7 +60,5 @@ if __name__ == '__main__':
             full_path = (build_folder, package_name, *path)
             f(full_path, *args)
         
-        # I'm not sure if nginx-conf is meant to be packaged, but it doesn't have a control file so it can't be. This ensures that
-        # it isn't packaged, which would cause an error.
-        if package_name in apps.config.keys():
+        if os.environ['SKIP_DEB'].lower() != "true":
             subprocess.run(["dpkg-deb", "--build", f"{build_folder}/{package_name}"],check=True)

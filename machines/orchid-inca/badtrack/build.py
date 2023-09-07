@@ -36,7 +36,8 @@ def systemd_service(full_path, package_name, apps):
         Environment=EMAIL_PORT={apps[package_name]['env']['EMAIL_PORT']}
         Environment=EMAIL_FROM={apps[package_name]['env']['EMAIL_FROM']}
         Environment=EMAIL_TO={apps[package_name]['env']['EMAIL_TO']}
-        EnvironmentFile=/var/lib/badtrack/secrets.env
+        Environment=EMAIL_USER={apps[package_name]['env']['EMAIL_USER']}
+        Environment=EMAIL_PASSWORD={apps[package_name]['env']['EMAIL_PASSWORD']}
         [Install]
         WantedBy=multi-user.target
     '''
@@ -53,7 +54,7 @@ def get_package_tree(package_name, apps):
                 #        'Description': 'Badtrack!',
                 #    })
                 control,
-                lambda d: {**d, 'Description': 'Badtrack!', 'Depends': 'badtrack-secrets'},
+                lambda d: {**d, 'Description': 'Badtrack!'},
                 deb822)),
         },
         'etc': {

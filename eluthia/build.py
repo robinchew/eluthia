@@ -6,6 +6,8 @@ import tempfile
 from textwrap import dedent
 from sh import git, pushd, ErrorReturnCode_128
 import subprocess
+import shutil
+import zipapp
 
 def get_builds(folder):
     for package_name in os.listdir(folder):
@@ -49,6 +51,10 @@ if __name__ == '__main__':
     build_folder = os.environ.get('BUILD_FOLDER', get_temp_folder())
     print('Build_folder:', build_folder)
 
+    if os.environ['SKIP_DEB'].lower() != "true":
+        os.makedirs(f'{build_folder}/zipapp/', exist_ok=True)
+        shutil.copy(f'{build_folder}/../eluthia/archive_script.py', f'{build_folder}/zipapp/__main__.py')
+
     for package_name, build in get_builds(os.environ['MACHINE_FOLDER']):
         args = (package_name, {
             name: build_app(d)
@@ -62,3 +68,8 @@ if __name__ == '__main__':
         
         if os.environ['SKIP_DEB'].lower() != "true":
             subprocess.run(["dpkg-deb", "--build", f"{build_folder}/{package_name}"],check=True)
+            shutil.copy(f'{build_folder}/{package_name}.deb', f'{build_folder}/zipapp/{package_name}.deb')
+    
+    if os.environ['SKIP_DEB'].lower() != "true":
+        zipapp.create_archive(f'{build_folder}/zipapp',f'{build_folder}/zipapp.pyz','/usr/bin/python3')
+        subprocess.run(['chmod','+x',f'{build_folder}/zipapp.pyz'])

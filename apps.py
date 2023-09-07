@@ -21,5 +21,8 @@ config = {
     },
     'nginx-conf': {
         'folder': '../nginx-conf'
-    }
+    },
+    'eluthia-cron-example': {
+        'folder': '../eluthia-cron-example',
+    },
 }

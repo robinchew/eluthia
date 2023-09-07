@@ -53,7 +53,7 @@ def get_package_tree(package_name, apps):
                 #        'Description': 'Badtrack!',
                 #    })
                 control,
-                lambda d: {**d, 'Description': 'Badtrack!'},
+                lambda d: {**d, 'Description': 'Badtrack!', 'Depends': 'badtrack-secrets'},
                 deb822)),
         },
         'etc': {

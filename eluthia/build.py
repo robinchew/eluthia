@@ -62,6 +62,3 @@ if __name__ == '__main__':
         
         if os.environ['SKIP_DEB'].lower() != "true":
             subprocess.run(["dpkg-deb", "--build", f"{build_folder}/{package_name}"],check=True)
-    
-    if os.environ['SKIP_DEB'].lower() != "true":
-        os.makedirs('')

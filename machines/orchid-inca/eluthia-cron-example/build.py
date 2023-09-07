@@ -8,7 +8,7 @@ from eluthia.py_configs import deb822
 @file
 def cron_file(full_path, package_name, apps):
     return f'''\
-        0 * * * * EMAIL_USER={apps[package_name]['env']['EMAIL_USER']} EMAIL_PASSWORD={apps[package_name]['env']['EMAIL_PASSWORD']} root python3 /usr/local/bin/eluthia-cron-example/main.py
+        0 * * * * root EMAIL_USER={apps[package_name]['env']['EMAIL_USER']} EMAIL_PASSWORD={apps[package_name]['env']['EMAIL_PASSWORD']} python3 /usr/local/bin/eluthia-cron-example/main.py
     '''
 
 def get_package_tree(package_name, apps):

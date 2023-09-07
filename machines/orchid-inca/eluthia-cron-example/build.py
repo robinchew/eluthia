@@ -16,7 +16,7 @@ def get_package_tree(package_name, apps):
         'DEBIAN': {
             'control': file(pipe(
                 control,
-                lambda d: {**d, 'Description': 'example package that sends an email every hour', 'Depends': 'badtrack-secrets'},
+                lambda d: {**d, 'Description': 'example package that sends an email every hour'},
                 deb822)),
         },
         'usr': {

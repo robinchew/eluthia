@@ -30,7 +30,7 @@ def systemd_service(full_path, package_name, apps):
         User=badtrackuser
         WorkingDirectory=/usr/local/bin/badtrack
         ExecStart=/usr/bin/python3 /usr/local/bin/badtrack/main.py
-        Environment=HISTORY_FOLDER=/var/lib/badtrack/history
+        Environment=HISTORY_FOLDER={apps[package_name]['env']['EMAIL_HOST']}
         Environment=CACHE_FOLDER=/var/lib/badtrack/cache
         Environment=EMAIL_HOST={apps[package_name]['env']['EMAIL_HOST']}
         Environment=EMAIL_PORT={apps[package_name]['env']['EMAIL_PORT']}

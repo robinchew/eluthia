@@ -11,4 +11,5 @@ def control(full_path, package_name, apps):
         'Package': package_name,
         'Version': apps[package_name]['version'],
         'Architecture': 'all',
+        'Maintainer': 'example' 
     }

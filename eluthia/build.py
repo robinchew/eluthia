@@ -8,6 +8,7 @@ from sh import git, pushd, ErrorReturnCode_128
 import subprocess
 import shutil
 import zipapp
+import sys
 
 def get_builds(folder):
     for package_name in os.listdir(folder):
@@ -56,7 +57,7 @@ if __name__ == '__main__':
     # Prepare zipapp directory
     os.makedirs(f'{build_folder}/zipapp/', exist_ok=True)
     shutil.copy(f'{os.path.abspath(os.path.dirname(__file__))}/zipapp_script.py', f'{build_folder}/zipapp/__main__.py')
-    shutil.copy(os.environ['APPS_PY'], f'{build_folder}/zipapp/apps.py')
+    shutil.copy(os.environ['APPS_PY'], f'{build_folder}/zipapp/apps.py') # Putting apps.py in the archive lets the zipapp script read the history folder variable
 
     for package_name, build in get_builds(os.environ['MACHINE_FOLDER']):
         args = (package_name, {
@@ -79,4 +80,4 @@ if __name__ == '__main__':
 
     if skip_deb:
         print("debian package creation was skipped, therefore the generated zip is broken.")
-        os._exit(1)
+        sys.exit(1)

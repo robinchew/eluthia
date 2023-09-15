@@ -1,157 +1,187 @@
 #!/usr/bin/env python3
+from apps import config
 import subprocess
 import zipfile
 import os
 import time
 
-APP_PATH = os.getcwd() # We actually have to use this instead of abspath to get the correct value
 
-HISTORY_PATH = '/var/lib/badtrack/history' #TODO: use environment variable.
-UNPACK_PATH = f'{APP_PATH}/zip_unpack' #TODO: This could also be an environment variable?
-NEW_DEB_PATH = f'{UNPACK_PATH}/new_debs'
-OLD_DEB_PATH = f'{UNPACK_PATH}/old_debs'
+class InstallationError(Exception): # Used to signify that installation / verification failed and we should roll back
+    pass
 
 
-def get_version(package_name):
+def get_version(package, deb_file=False):
     """
-    Verifies that a package is installed, and get it's version.
+    Get the version of a package or verify that it is installed
     Input:
-        string package_name - the name of the package that should be checked
+        string package - Either the path to a debian package file, or the name of an installed package
+        bool deb_file - set to True if inputting the path to a debian package file
     Output:
         string version - version of the package
             NoneType None denotes that the package is not installed.
     """
-    try:
-        # Get package version number by parsing dpkg -s.
-        return str(subprocess.check_output(['dpkg', '-s', package_name]))\
-                    .split('Version: ')[1]\
-                     .split('\\n')[0]
+    if deb_file:
+        return subprocess.check_output(['dpkg-deb', '-f', package, 'Version']).decode().rstrip()
 
-    except subprocess.CalledProcessError: # This happens if the package is not installed. I could not find a way to check if packages are installed without causing an exception.
+    try:
+        return subprocess.check_output(['dpkg-query', '--showformat=\'${Version}\'', '--show', package]).decode().strip('\'')
+    except subprocess.CalledProcessError: # This happens if the package is not installed.
         return None
 
 
-def unpack_zip(zip_path):
+def unpack_zip(zip_path, unpack_path):
     """
     Unpacks the packages in the archive into NEW_DEB_PATH. Also extracts information about the packages.
     Input:
         string zip_path - path to the archive to be extracted (this should always be os.path.dirname(__file__), but it's a parameter for modularity)
+        string unpack_path - path to where the packages should be placed
     Output:
-        dict new_packages - new packages to be installed and their versions. Format {package_name: version}
-        dict old_packages - old packages to be replaced and their versions. Format: {package_name: version}
+        list package_list - list of packages inside the archive.
     """
-    def parse_package_names(namelist):
-        #TODO: Eventually, packages will be named with their version included. Once this change is made, this function will be properly implemented.
-        packages = {}
-        for item in namelist:
-            if not item.endswith('.deb'): # Guard clause, makes us skip __main__.py or any other non-package files that might be added in future
-                continue
-
-            #TODO: Here we need to split the name into version and package name.
-            version = None
-            name = item[:-4] # removes .deb from package name
-
-            packages[name] = version
-        return packages
-
     with zipfile.ZipFile(zip_path) as z:
+        package_list = [item for item in z.namelist() if item.lower().endswith('.deb')]
 
-        new_packages = parse_package_names(z.namelist())
-        old_packages = {package: get_version(package) for package in new_packages.keys() if get_version(package) is not None}
+        for package in package_list:
+            z.extract(package, unpack_path)
 
-        for package in new_packages.keys():
-            z.extract(f'{package}.deb', path=NEW_DEB_PATH) # Extract the packages to NEW_DEB_PATH
-
-    return new_packages, old_packages #I'm not 100% sure if I want to return these from unpack_zip(), but I like that it means we only need to open the zip once.
+    return package_list
 
 
-def repack(package_name, version):
-    subprocess.run(['dpkg-repack', package_name])
-    repack_path = f'{APP_PATH}/{package_name}_{version}_all.deb' # Path to where dpkg-repack leaves the deb file.
+def repack(package_dict, repack_path):
+    """
+    Repackage installed debian packages into .deb files
+    Input:
+        dict package_dict - a dictionary of packages to repack - Format: {package_name: version}
+        string repack_path - path to where repackaged .deb files should be placed
+    """
+    if get_version('dpkg_repack') is None:
+        subprocess.run(['apt-get', 'install', 'dpkg-repack'])
 
-    os.rename(repack_path, f'{OLD_DEB_PATH}/{package_name}.deb') # Move package from where dpkg-repack puts it to dedicated folder, and rename
+    for package_name, version in package_dict.items():
+        subprocess.run(['dpkg-repack', package_name], cwd=repack_path)
+        os.rename(f'{repack_path}/{package_name}_{version}_all.deb', f'{package_name}.deb')
+
     return
 
 
-def verify_installation(new_packages, preinst_file_count, timeout, check_frequency): #TODO: finish
+def verify_installation(packages, preinst_file_count, history_folder, timeout, check_frequency):
     """
     Verifies that packages are installed and working correctly.
     Input:
-        dict new_packages - new packages to be installed and their versions. Format {package_name: version}
+        list packages - new packages to be installed
         int preinst_file_count - Number of files that were in badtrack's history folder before installation.
+        string history_folder - path to badtrack's history folder
         int timeout - how long to give badtrack to make it's first history file before rolling back.
         int check_frequency - how often to check the history folder for new files.
-    Output:
-        bool - Whether the installation was successful.
-        string error_message - If installation was not successful, contains the reason why installation was detected to be unsuccessful.
     """
-    def verify_badtrack(preinst_file_count, timeout, check_frequency):
-        while time.time() < timeout: # Verify that badtrack is making files
+    def verify_badtrack(preinst_file_count, history_folder, timeout, check_frequency):
+        stop_time = time.time() + timeout
+        while time.time() < stop_time: # Verify that badtrack is making files
             time.sleep(check_frequency)
-            if len(os.listdir(HISTORY_PATH)) > preinst_file_count:
+            if len(os.listdir(history_folder)) > preinst_file_count:
                 return True
-
         return False
 
-    timeout = time.time() + timeout
+    missing_packages = [package for package in packages if get_version(package) == None] # packages in new_packages that aren't installed
 
-    missing_packages = [package for package in new_packages.keys() if get_version(package) == None] # packages in new_packages that aren't installed
     if missing_packages:
-            return False, f'Packages were not installed: {missing_packages}'
+        raise InstallationError(f'Packages were not installed: {missing_packages}')
 
-    if not verify_badtrack(preinst_file_count, timeout, check_frequency):
-        return False, 'No files were generated by badtrack within 1 minute'
+    if not verify_badtrack(preinst_file_count, history_folder, timeout, check_frequency):
+        raise InstallationError('No files were generated by badtrack within 1 minute')
 
-    return True, None
+    return
 
 
 def rollback(new_packages, old_packages):
     """
     Rolls back the installation of packages.
     Input:
-        dict new_packages - new packages to be installed and their versions. Format {package_name: version}
-        dict old_packages - old packages to be replaced and their versions. Format {package_name: version}
+        list new_packages - installed packages to be replaced
+        list old_packages - paths to old debian files to replace the installed versions
     """
-    subprocess.run(['dpkg', '-r'] + new_packages.keys()) # remove new packages
-    reinstall_command = ['dpkg', '-E', '-i'] + [f'{OLD_DEB_PATH}/{package}.deb' for package in old_packages.keys()] # Necessary because of dependencies
-    subprocess.run(reinstall_command)
+    subprocess.run(['dpkg', '-r'] + list(new_packages))
+    subprocess.run(['dpkg', '--skip-same-version', '-i'] + list(old_packages))
     return
 
 
-def main():
-    os.makedirs(NEW_DEB_PATH, exist_ok=True)
-    os.makedirs(OLD_DEB_PATH, exist_ok=True)
+def install_packages(packages):
+    """
+    Install debian packages from dictionary
+    Input:
+        list new_packages - new packages to be installed
+    """
+    install_command = ['dpkg', '--skip-same-version', '-i'] + packages
+    subprocess.run(install_command, check=True)
+    return
 
-    # Extract archive, get packages and their versions
-    new_packages, old_packages = unpack_zip(os.path.dirname(__file__)) # the variables are dictionaries {name: version}
+
+def add_path(path, packages):
+    """
+    Convert dictionary of packages into a list of paths to the debian files
+    Input:
+        string path - path to where the debian files are stored
+        dict packages - dictionary of package names
+    """
+    return [f'{path}/{package}.deb' for package in packages.keys()]
 
 
-    # Repack old packages
-    subprocess.run(['apt-get', 'install', 'dpkg-repack'])
-    for package_name, old_version in old_packages.items():
-        repack(package_name, old_version)
+def add_rollback_message(error):
+    """
+    Adds a message to the end of an error that notifies the user that the installation has been rolled back.
+    """
+    error.args = (error.args[0] + '\n\n    Installation has been rolled back',) + error.args[1:]
+    return error
 
-    # Get current amount of badtrack history files (To verify that they increase after installation.)
-    preinst_file_count = len(os.listdir(HISTORY_PATH))
 
-    # Install new packages
-    install_command = ['dpkg', '-E', '-i'] + [f'{NEW_DEB_PATH}/{package}.deb' for package in new_packages.keys()]
-    subprocess.run(install_command)
+def make_directories(*directories):
+    for folder in directories:
+        os.makedirs(folder, exist_ok=True)
+    return
 
-    # Verify new packages
-    install_successful, error_message = verify_installation(new_packages, preinst_file_count, timeout=60, check_frequency=5)
-    if not install_successful:
-        rollback(new_packages, old_packages)
-        print(f"\n\n \033[91m Error: {error_message}. The installation has been rolled back.") # \033[91m makes text red.
 
-    else: # Print information about package changes
-        success_string = "\n\nAll packages installed successfully. Changes:"
-        for package, version in new_packages.items():
-            success_string += f"\n    {package}: {old_packages.get(package,'None')} -> (Not yet implemented)"
-        print(success_string)
+def success_message(old_packages, new_packages):
+    return '\n\nAll packages installed successfully. Changes:\n    ' + '\n    '.join(
+        f"{package}: {old_packages.get(package,'None')} -> {version}"
+        for package, version in new_packages.items()) 
 
+
+def main(HISTORY_FOLDER, OLD_DEB_PATH, NEW_DEB_PATH):
+    make_directories(HISTORY_FOLDER, NEW_DEB_PATH, OLD_DEB_PATH)
+
+    # Extract archive, get list of packages to be installed
+    _packages = unpack_zip(os.path.dirname(__file__), unpack_path=NEW_DEB_PATH)
+
+    #              {Package_name: Version}
+    NEW_PACKAGES = {os.path.splitext(item)[0]: get_version(f'{NEW_DEB_PATH}/{item}', deb_file=True)
+                    for item in _packages}
+    OLD_PACKAGES = {package: get_version(package)
+                    for package in NEW_PACKAGES.keys()
+                    if get_version(package) is not None}
+
+    repack(OLD_PACKAGES, OLD_DEB_PATH)
+
+    # Install packages
+    preinst_file_count = len(os.listdir(HISTORY_FOLDER))
+    try: 
+        install_packages(add_path(NEW_DEB_PATH, NEW_PACKAGES))
+        verify_installation(NEW_PACKAGES.keys(), preinst_file_count, HISTORY_FOLDER, timeout=20, check_frequency=5)
+
+    # Rollback installation
+    except Exception as error:
+        rollback(NEW_PACKAGES.keys(), add_path(OLD_DEB_PATH, OLD_PACKAGES))
+        error = add_rollback_message(error)
+        raise error
+
+    # Installation successful.
+    print(success_message(OLD_PACKAGES, NEW_PACKAGES))
     return
 
 
 if __name__ == '__main__':
-    main()
+    HISTORY_FOLDER = config['badtrack']['env']['HISTORY_FOLDER'] # Reads history path from apps.py
+    UNPACK_PATH = os.environ.get("UNPACK_PATH", f'{os.getcwd()}/zip_unpack')
+    NEW_DEB_PATH = f'{UNPACK_PATH}/new_debs'
+    OLD_DEB_PATH = f'{UNPACK_PATH}/old_debs'
+
+    main(HISTORY_FOLDER, NEW_DEB_PATH, OLD_DEB_PATH)

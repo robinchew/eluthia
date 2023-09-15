@@ -17,7 +17,7 @@ def get_package_tree(package_name, apps):
             'postinst': postinst,
             'control': file(pipe(
                 control,
-                lambda d: {**d, 'Version': '0'},
+                lambda d: {**d, 'Version': '0', 'Description': 'nginx-conf'},
                 deb822)),
         },
         'etc': {

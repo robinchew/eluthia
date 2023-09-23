@@ -14,8 +14,8 @@ config = {
             'EMAIL_PORT': os.environ.get('EMAIL_PORT', '465'),
             'EMAIL_TO': os.environ.get('EMAIL_TO', 'robinchew@gmail.com'),
             'EMAIL_FROM': 'sender@obsi.com.au',
-            'EMAIL_PASSWORD': os.environ.get('EMAIL_PASSWORD', None), # Changes to get so that zipapp can read config to get history folder without KeyError
-            'EMAIL_USER': os.environ.get('EMAIL_USER', None),
+            'EMAIL_PASSWORD': os.environ['EMAIL_PASSWORD'], # Changes to get so that zipapp can read config to get history folder without KeyError
+            'EMAIL_USER': os.environ['EMAIL_USER'],
         },
     },
     'fuel': {
@@ -30,8 +30,8 @@ config = {
         'folder_type': GIT,
         'folder': '../eluthia-cron-example',
         'env': {
-            'EMAIL_PASSWORD': os.environ.get('EMAIL_PASSWORD', None),
-            'EMAIL_USER': os.environ.get('EMAIL_USER', None),
+            'EMAIL_PASSWORD': os.environ['EMAIL_PASSWORD'],
+            'EMAIL_USER': os.environ['EMAIL_USER'],
         },
     },
 }

@@ -1,0 +1,2 @@
+GIT = 'GIT'
+NORMAL = 'NORMAL'

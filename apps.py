@@ -1,8 +1,11 @@
 import os
+from eluthia.constants import GIT, NORMAL
+
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 config = {
     'badtrack': {
+        'folder_type': GIT,
         'folder': '../badtrack',
         'env': {
             'HISTORY_FOLDER': '/var/lib/badtrack/history',
@@ -16,12 +19,15 @@ config = {
         },
     },
     'fuel': {
+        'folder_type': GIT,
         'folder': '../fueltrack',
     },
     'nginx-conf': {
+        'folder_type': NORMAL,
         'folder': '../nginx-conf'
     },
     'eluthia-cron-example': {
+        'folder_type': GIT,
         'folder': '../eluthia-cron-example',
         'env': {
             'EMAIL_PASSWORD': os.environ.get('EMAIL_PASSWORD', None),

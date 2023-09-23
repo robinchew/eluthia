@@ -83,11 +83,12 @@ if __name__ == '__main__':
     os.makedirs(f'{build_folder}/zipapp/', exist_ok=True)
     shutil.copy(f'{os.path.abspath(os.path.dirname(__file__))}/zipapp_script.py', f'{build_folder}/zipapp/__main__.py')
 
-    for package_name, build_py_path, build in get_builds(os.environ['MACHINE_FOLDER']):
-        all_apps_config = {
-            name: build_app(build_py_path, d)
-            for name, d in apps.config.items()
-        }
+    all_apps_config = {
+        package_name: build_app(build_py_path, apps.config[package_name])
+        for package_name, build_py_path, _build in get_builds(os.environ['MACHINE_FOLDER'])
+    }
+
+    for package_name, _build_py_path, build in get_builds(os.environ['MACHINE_FOLDER']):
         app = all_apps_config[package_name]
         tree = build.get_package_tree(package_name, all_apps_config)
         full_package_name = '-'.join((package_name, app['version'], app['app_config_version']))

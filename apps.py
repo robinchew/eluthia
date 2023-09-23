@@ -14,8 +14,16 @@ config = {
             'EMAIL_PORT': os.environ.get('EMAIL_PORT', '465'),
             'EMAIL_TO': os.environ.get('EMAIL_TO', 'robinchew@gmail.com'),
             'EMAIL_FROM': 'sender@obsi.com.au',
-            'EMAIL_PASSWORD': os.environ['EMAIL_PASSWORD'], # Changes to get so that zipapp can read config to get history folder without KeyError
+            'EMAIL_PASSWORD': os.environ['EMAIL_PASSWORD'],
             'EMAIL_USER': os.environ['EMAIL_USER'],
+        },
+    },
+    'file_saver': {
+        'folder_type': GIT,
+        'folder': '../file_saver',
+        'env': {
+            'SMTP_USERNAME': os.environ['EMAIL_USER'],
+            'SMTP_PASSWORD': os.environ['EMAIL_PASSWORD'],
         },
     },
     'fuel': {

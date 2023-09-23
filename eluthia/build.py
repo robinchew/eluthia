@@ -16,7 +16,8 @@ import canonical_json
 
 def get_builds(folder):
     for package_name in os.listdir(folder):
-        yield package_name, SourceFileLoader("machine", os.path.join(folder, package_name, 'build.py')).load_module()
+        build_py_path = os.path.abspath(os.path.join(folder, package_name, 'build.py'))
+        yield package_name, build_py_path, SourceFileLoader("build_file", build_py_path).load_module()
 
 def flatten_paths(d, l = ()):
     if type(d) is dict:
@@ -41,10 +42,32 @@ def get_git_version(folder):
     with pushd(folder):
         return git('rev-list', '--count', 'HEAD').strip() + '-' + git('rev-parse', '--short', 'HEAD').strip()
 
-def build_app(app):
+def get_eluthia_version_of(file):
+    # Need to set GIT_PAGER as blank, or else the output will be something like:
+    #
+    #   \x1b[?1h\x1b=\r4d735de\x1b[m\n\r\x1b[K\x1b[?1l\x1b>'
+    #
+    # instead of just:
+    #
+    #   4d735de
+    commit_id = git('log', '-n', 1, '--format=%h', '--', file, _env={'GIT_PAGER': ''}).strip()
+
+    commit_number = git('rev-list', '--count', commit_id).strip()
+    return commit_number + '-' + commit_id
+
+def determine_version(build_py_path, app):
+    if 'version' in app:
+        return app['version']
+
+    if app['folder_type'] is GIT:
+        return get_git_version(app['folder'])
+
+    return get_eluthia_version_of(build_py_path)
+
+def build_app(build_py_path, app):
     return {
         **app,
-        'version': app.get('version', get_git_version(app['folder']) if app['folder_type'] is GIT else '0'),
+        'version': determine_version(build_py_path, app),
         'app_config_version': md5(canonical_json.dumps(app).encode()).hexdigest(),
         'port': 9999,
     }
@@ -60,9 +83,9 @@ if __name__ == '__main__':
     os.makedirs(f'{build_folder}/zipapp/', exist_ok=True)
     shutil.copy(f'{os.path.abspath(os.path.dirname(__file__))}/zipapp_script.py', f'{build_folder}/zipapp/__main__.py')
 
-    for package_name, build in get_builds(os.environ['MACHINE_FOLDER']):
+    for package_name, build_py_path, build in get_builds(os.environ['MACHINE_FOLDER']):
         all_apps_config = {
-            name: build_app(d)
+            name: build_app(build_py_path, d)
             for name, d in apps.config.items()
         }
         app = all_apps_config[package_name]

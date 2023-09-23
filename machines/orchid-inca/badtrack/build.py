@@ -21,6 +21,10 @@ def postinst(full_path, package_name, apps):
 
 @file
 def systemd_service(full_path, package_name, apps):
+    environment_variables = '\n'.join(
+        f"        Environment={variable}={value}"
+        for variable, value in apps[package_name]['env'].items()).strip()
+
     return f'''\
         [Unit]
         Description=BadTrack Service
@@ -30,14 +34,7 @@ def systemd_service(full_path, package_name, apps):
         User=badtrackuser
         WorkingDirectory=/usr/local/bin/badtrack
         ExecStart=/usr/bin/python3 /usr/local/bin/badtrack/main.py
-        Environment=HISTORY_FOLDER=/var/lib/badtrack/history
-        Environment=CACHE_FOLDER=/var/lib/badtrack/cache
-        Environment=EMAIL_HOST={apps[package_name]['env']['EMAIL_HOST']}
-        Environment=EMAIL_PORT={apps[package_name]['env']['EMAIL_PORT']}
-        Environment=EMAIL_FROM={apps[package_name]['env']['EMAIL_FROM']}
-        Environment=EMAIL_TO={apps[package_name]['env']['EMAIL_TO']}
-        Environment=EMAIL_USER={apps[package_name]['env']['EMAIL_USER']}
-        Environment=EMAIL_PASSWORD={apps[package_name]['env']['EMAIL_PASSWORD']}
+        {environment_variables}
         [Install]
         WantedBy=multi-user.target
     '''

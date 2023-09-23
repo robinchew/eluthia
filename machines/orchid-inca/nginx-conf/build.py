@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 from eluthia.decorators import chmod, copy_folder, file, git_clone, empty_folder
 from eluthia.defaults import control
 from eluthia.functional import pipe
@@ -11,19 +13,29 @@ def postinst(full_path, package_name, apps):
 systemctl reload nginx
     '''
 
+def deployed(path, package, apps):
+    return dedent('''\
+        server {
+            listen 9999;
+            location / {
+                echo "Serving for port 9999";
+            }
+        }
+    ''')
+
 def get_package_tree(package_name, apps):
     return {
         'DEBIAN': {
             'postinst': postinst,
             'control': file(pipe(
                 control,
-                lambda d: {**d, 'Version': '0'},
+                lambda d: {**d, 'Version': '0', 'Description': 'nginx-conf'},
                 deb822)),
         },
         'etc': {
             'nginx': {
                 'sites-enabled': {
-                    'deployed': file(lambda path, package, apps: ''),
+                    'deployed_example': file(lambda path, package, apps: ''),
                 },
             },
         },

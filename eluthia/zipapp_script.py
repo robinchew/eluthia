@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from apps import config
 import subprocess
 import zipfile
 import os
@@ -74,6 +73,8 @@ def verify_installation(packages, preinst_file_count, history_folder, timeout, c
         int timeout - how long to give badtrack to make it's first history file before rolling back.
         int check_frequency - how often to check the history folder for new files.
     """
+    preinst_file_count = len(os.listdir(history_folder))
+
     def verify_badtrack(preinst_file_count, history_folder, timeout, check_frequency):
         stop_time = time.time() + timeout
         while time.time() < stop_time: # Verify that badtrack is making files
@@ -126,14 +127,6 @@ def add_path(path, packages):
     return [f'{path}/{package}.deb' for package in packages.keys()]
 
 
-def add_rollback_message(error):
-    """
-    Adds a message to the end of an error that notifies the user that the installation has been rolled back.
-    """
-    error.args = (error.args[0] + '\n\n    Installation has been rolled back',) + error.args[1:]
-    return error
-
-
 def make_directories(*directories):
     for folder in directories:
         os.makedirs(folder, exist_ok=True)
@@ -146,8 +139,8 @@ def success_message(old_packages, new_packages):
         for package, version in new_packages.items()) 
 
 
-def main(HISTORY_FOLDER, OLD_DEB_PATH, NEW_DEB_PATH):
-    make_directories(HISTORY_FOLDER, NEW_DEB_PATH, OLD_DEB_PATH)
+def main(OLD_DEB_PATH, NEW_DEB_PATH):
+    make_directories(NEW_DEB_PATH, OLD_DEB_PATH)
 
     # Extract archive, get list of packages to be installed
     _packages = unpack_zip(os.path.dirname(__file__), unpack_path=NEW_DEB_PATH)
@@ -162,16 +155,15 @@ def main(HISTORY_FOLDER, OLD_DEB_PATH, NEW_DEB_PATH):
     repack(OLD_PACKAGES, OLD_DEB_PATH)
 
     # Install packages
-    preinst_file_count = len(os.listdir(HISTORY_FOLDER))
-    try: 
+    try:
         install_packages(add_path(NEW_DEB_PATH, NEW_PACKAGES))
-        verify_installation(NEW_PACKAGES.keys(), preinst_file_count, HISTORY_FOLDER, timeout=20, check_frequency=5)
 
     # Rollback installation
     except Exception as error:
+        print('Rollback started')
         rollback(NEW_PACKAGES.keys(), add_path(OLD_DEB_PATH, OLD_PACKAGES))
-        error = add_rollback_message(error)
-        raise error
+        print('Rollback complete')
+        raise
 
     # Installation successful.
     print(success_message(OLD_PACKAGES, NEW_PACKAGES))
@@ -179,9 +171,8 @@ def main(HISTORY_FOLDER, OLD_DEB_PATH, NEW_DEB_PATH):
 
 
 if __name__ == '__main__':
-    HISTORY_FOLDER = config['badtrack']['env']['HISTORY_FOLDER'] # Reads history path from apps.py
     UNPACK_PATH = os.environ.get("UNPACK_PATH", f'{os.getcwd()}/zip_unpack')
     NEW_DEB_PATH = f'{UNPACK_PATH}/new_debs'
     OLD_DEB_PATH = f'{UNPACK_PATH}/old_debs'
 
-    main(HISTORY_FOLDER, NEW_DEB_PATH, OLD_DEB_PATH)
+    main(NEW_DEB_PATH, OLD_DEB_PATH)

@@ -1,4 +1,6 @@
 import os
+HERE = os.path.abspath(os.path.dirname(__file__))
+
 config = {
     'badtrack': {
         'folder': '../badtrack',
@@ -26,4 +28,11 @@ config = {
             'EMAIL_USER': os.environ.get('EMAIL_USER', None),
         },
     },
+}
+config = {
+    k: {
+        **d,
+        'folder': os.path.abspath(os.path.join(HERE, d['folder']))
+    }
+    for k, d in config.items()
 }

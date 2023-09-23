@@ -52,7 +52,7 @@ if __name__ == '__main__':
     build_folder = os.environ.get('BUILD_FOLDER', get_temp_folder())
     print('Build_folder:', build_folder)
 
-    skip_deb = os.environ['SKIP_DEB'].lower() == "true"
+    skip_deb = 'SKIP_DEB' in os.environ
 
     # Prepare zipapp directory
     os.makedirs(f'{build_folder}/zipapp/', exist_ok=True)
@@ -74,10 +74,10 @@ if __name__ == '__main__':
             subprocess.run(["dpkg-deb", "--build", f"{build_folder}/{package_name}"],check=True)
             shutil.copy(f'{build_folder}/{package_name}.deb', f'{build_folder}/zipapp/{package_name}.deb')
 
-    # Create executable archive
-    zipapp.create_archive(f'{build_folder}/zipapp', f'{build_folder}/zipapp.pyz', '/usr/bin/python3')
-    subprocess.run(['chmod', '+x', f'{build_folder}/zipapp.pyz'])
-
     if skip_deb:
-        print("debian package creation was skipped, therefore the generated zip is broken.")
+        print("debian package creation was skipped, so zip package was skipped too.")
         sys.exit(1)
+    else:
+        # Create executable archive
+        zipapp.create_archive(f'{build_folder}/zipapp', f'{build_folder}/zipapp.pyz', '/usr/bin/python3')
+        subprocess.run(['chmod', '+x', f'{build_folder}/zipapp.pyz'])

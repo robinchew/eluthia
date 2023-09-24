@@ -67,8 +67,7 @@ def determine_version(build_py_path, app):
 
     return get_eluthia_version_of(build_py_path)
 
-def build_app(build_py_path, app):
-    clean_git_folder = get_temp_folder() if app['folder_type'] is GIT else None
+def build_app(build_py_path, app, clean_git_folder):
     if clean_git_folder:
         git.clone(app['folder'], clean_git_folder)
     return {
@@ -78,6 +77,10 @@ def build_app(build_py_path, app):
         'port': 9999,
         'clean_git_folder': clean_git_folder,
     }
+
+def makedirs(path):
+    os.makedirs(path, exist_ok=True)
+    return path
 
 def verify_apps_config(config):
     for key in config:
@@ -93,11 +96,14 @@ if __name__ == '__main__':
     skip_deb = 'SKIP_DEB' in os.environ
 
     # Prepare zipapp directory
-    os.makedirs(f'{build_folder}/zipapp/', exist_ok=True)
+    makedirs(f'{build_folder}/zipapp/')
     shutil.copy(f'{os.path.abspath(os.path.dirname(__file__))}/zipapp_script.py', f'{build_folder}/zipapp/__main__.py')
 
     all_apps_config = {
-        package_name: build_app(build_py_path, apps.config[package_name])
+        package_name: build_app(
+            build_py_path,
+            apps.config[package_name],
+            makedirs(os.path.join(build_folder, 'clean_git', package_name)) if apps.config[package_name]['folder_type'] is GIT else None)
         for package_name, build_py_path, _build in get_builds(os.environ['MACHINE_FOLDER'])
     }
 

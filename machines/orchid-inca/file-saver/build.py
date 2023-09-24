@@ -3,7 +3,7 @@ import os
 from eluthia.decorators import chmod, copy_files, copy_folder, file, git_clone, empty_folder, build_and_unpack_erlang_release
 from eluthia.defaults import control
 from eluthia.functional import pipe
-from eluthia.py_configs import deb822
+from eluthia.py_configs import deb822, nginx
 
 
 @chmod(0o755)
@@ -67,6 +67,10 @@ def get_package_tree(package_name, apps):
         'home': {
             'ubuntu': {
                 'system': {
+                    'file_saver_front': copy_files(apps[package_name]['folder'], [
+                        'view.html',
+                        'edit.html',
+                    ]),
                     'file_saver_erl': build_and_unpack_erlang_release(os.path.join(apps[package_name]['clean_git_folder'], 'erlserver')),
                     'file_saver_py': copy_files(apps[package_name]['folder'], [
                         'cli.py',
@@ -76,6 +80,38 @@ def get_package_tree(package_name, apps):
                     'file_saver_logs': empty_folder,
                     'file_saved': empty_folder,
                 }
+            },
+        },
+        'etc': {
+            'nginx': {
+                'sites-enabled': {
+                    package_name: file(pipe(
+                        lambda full_path, package_name, apps: (
+                            ('server', (
+                                ('listen', 80),
+                                ('server_name', 'view.robin.au'),
+                                ('charset', 'utf-8'),
+                                ('location', '/', (
+                                    ('root', '/home/ubuntu/systemd/file_saver_front'),
+                                    ('try_files', '$uri', '/view.html'),
+                                )),
+                                # FUELTRACK not packaged yet!
+                                # ('location', '/fuel', (
+                                #    ('proxy_pass', 'http://localhost:4444'),
+                                # )),
+                            )),
+                            ('server', (
+                                ('listen', 80),
+                                ('server_name', 'edit.robin.au'),
+                                ('charset', 'utf-8'),
+                                ('location', '/', (
+                                    ('root', '/home/ubuntu/systemd/file_saver_front'),
+                                    ('try_files', '$uri', '/edit.html'),
+                                )),
+                            )),
+                        ),
+                        nginx)),
+                },
             },
         },
     }

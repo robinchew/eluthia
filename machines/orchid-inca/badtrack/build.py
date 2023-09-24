@@ -33,7 +33,11 @@ def systemd_service(full_path, package_name, apps):
         Type=simple
         User=badtrackuser
         WorkingDirectory=/usr/local/bin/badtrack
-        ExecStart=/usr/bin/python3 /usr/local/bin/badtrack/main.py
+
+        # https://fhackts.wordpress.com/2014/11/27/systemd-journal-not-showing-python-3-print/
+        # https://stackoverflow.com/questions/230751/how-can-i-flush-the-output-of-the-print-function
+        ExecStart=/usr/bin/python3 -u /usr/local/bin/badtrack/main.py
+
         {environment_variables}
         [Install]
         WantedBy=multi-user.target

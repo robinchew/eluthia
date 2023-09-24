@@ -5,14 +5,17 @@ from importlib.machinery import SourceFileLoader
 import os
 import tempfile
 from textwrap import dedent
+import re
 from sh import git, pushd, ErrorReturnCode_128
 import subprocess
-import shutil
 import zipapp
+import shutil
 import sys
 
 from constants import GIT
 import canonical_json
+
+VALID_DEBIAN_PACKAGE_NAME = re.compile('^[a-z0-9-+.]+$')
 
 def get_builds(folder):
     for package_name in os.listdir(folder):
@@ -65,15 +68,25 @@ def determine_version(build_py_path, app):
     return get_eluthia_version_of(build_py_path)
 
 def build_app(build_py_path, app):
+    clean_git_folder = get_temp_folder() if app['folder_type'] is GIT else None
+    if clean_git_folder:
+        git.clone(app['folder'], clean_git_folder)
     return {
         **app,
         'version': determine_version(build_py_path, app),
         'app_config_version': md5(canonical_json.dumps(app).encode()).hexdigest(),
         'port': 9999,
+        'clean_git_folder': clean_git_folder,
     }
+
+def verify_apps_config(config):
+    for key in config:
+        assert VALID_DEBIAN_PACKAGE_NAME.match(key), f"'{key}' contains invalid characters for a Debian package name"
 
 if __name__ == '__main__':
     apps = SourceFileLoader("apps", os.environ['APPS_PY']).load_module()
+    verify_apps_config(apps.config)
+
     build_folder = os.environ.get('BUILD_FOLDER', get_temp_folder())
     print('Build_folder:', build_folder)
 

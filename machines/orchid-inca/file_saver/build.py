@@ -67,7 +67,7 @@ def get_package_tree(package_name, apps):
         'home': {
             'ubuntu': {
                 'system': {
-                    'file_saver_erl': build_and_unpack_erlang_release(os.path.join(apps[package_name]['folder'], 'erlserver')),
+                    'file_saver_erl': build_and_unpack_erlang_release(os.path.join(apps[package_name]['clean_git_folder'], 'erlserver')),
                     'file_saver_py': copy_files(apps[package_name]['folder'], [
                         'cli.py',
                         'cli_write.py',

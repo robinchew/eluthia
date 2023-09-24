@@ -6,6 +6,8 @@ import shutil
 import sh
 from sh import pushd, git
 
+HERE = os.path.abspath(os.path.dirname(__file__))
+
 def chmod(octal):
     def decorate(func):
         @wraps(func)
@@ -34,8 +36,9 @@ def copy_folder(from_folder):
 
 def copy_files(from_folder, file_names):
     def copy_to(full_path, *args, **kwargs):
+        empty_folder(full_path, *args, **kwargs)
         for name in file_names:
-            shutil.copytree(
+            shutil.copy(
                 os.path.join(from_folder, name),
                 os.path.join(*full_path + (name,)))
     return copy_to
@@ -50,11 +53,16 @@ def empty_folder(full_path, package_name, apps):
     return
 
 def build_and_unpack_erlang_release(erlang_project_folder_path):
-    def build_and_unpack(full_path, package_name, apps):
+    def build_and_unpack(full_path, *args, **kwargs):
+        empty_folder(full_path, *args, **kwargs)
         with pushd(erlang_project_folder_path):
             sh.make()
 
-        package_name, version = json.loads(sh.escript(os.path.join(erlang_project_folder_path, 'relx.config')))
+        release_name, version = json.loads(sh.escript(
+            os.path.join(HERE, 'read_relx_package.escript'),
+            os.path.join(erlang_project_folder_path, 'relx.config')))
 
-        print(package_name, version)
+        release_file_path = os.path.join(erlang_project_folder_path, '_rel', release_name, release_name + '-' + version + '.tar.gz')
+        sh.tar('xf', release_file_path, '-C', os.path.join(*full_path))
+
     return build_and_unpack

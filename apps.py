@@ -18,7 +18,7 @@ config = {
             'EMAIL_USER': os.environ['EMAIL_USER'],
         },
     },
-    'file_saver': {
+    'file-saver': {
         'folder_type': GIT,
         'folder': '../file_saver',
         'env': {

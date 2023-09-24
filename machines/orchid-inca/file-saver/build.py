@@ -61,6 +61,8 @@ def get_package_tree(package_name, apps):
             'ubuntu': {
                 'system': {
                     'file_saver_front': copy_files(apps[package_name]['folder'], [
+                        'ramda-0.27.2-min.js',
+                        'cookieInit.js',
                         'view.html',
                         'edit.html',
                     ]),
@@ -90,7 +92,7 @@ def get_package_tree(package_name, apps):
                                 ('server_name', 'view.robin.au'),
                                 ('charset', 'utf-8'),
                                 ('location', '/', (
-                                    ('root', '/home/ubuntu/systemd/file_saver_front'),
+                                    ('root', '/home/ubuntu/system/file_saver_front'),
                                     ('try_files', '$uri', '/view.html'),
                                 )),
                                 # FUELTRACK not packaged yet!
@@ -103,7 +105,7 @@ def get_package_tree(package_name, apps):
                                 ('server_name', 'edit.robin.au'),
                                 ('charset', 'utf-8'),
                                 ('location', '/', (
-                                    ('root', '/home/ubuntu/systemd/file_saver_front'),
+                                    ('root', '/home/ubuntu/system/file_saver_front'),
                                     ('try_files', '$uri', '/edit.html'),
                                 )),
                             )),

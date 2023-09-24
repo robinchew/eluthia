@@ -24,6 +24,7 @@ config = {
         'env': {
             'SMTP_USERNAME': os.environ['EMAIL_USER'],
             'SMTP_PASSWORD': os.environ['EMAIL_PASSWORD'],
+            'TOTP_SECRET': os.environ['TOTP_SECRET'],
         },
     },
     'fuel': {

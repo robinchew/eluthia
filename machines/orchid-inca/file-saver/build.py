@@ -57,13 +57,6 @@ def get_package_tree(package_name, apps):
                 lambda d: {**d, 'Description': 'File Saver'},
                 deb822)),
         },
-        'etc': {
-            'systemd': {
-                'system': {
-                    f'{package_name}.service': systemd_service,
-                },
-            },
-        },
         'home': {
             'ubuntu': {
                 'system': {
@@ -83,6 +76,11 @@ def get_package_tree(package_name, apps):
             },
         },
         'etc': {
+            'systemd': {
+                'system': {
+                    f'{package_name}.service': systemd_service,
+                },
+            },
             'nginx': {
                 'sites-enabled': {
                     package_name: file(pipe(

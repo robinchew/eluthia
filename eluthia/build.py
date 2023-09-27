@@ -45,8 +45,7 @@ def get_temp_folder():
         return folder
 
 def get_git_version(folder):
-    with pushd(folder):
-        return git('rev-list', '--count', 'HEAD').strip() + '-' + git('rev-parse', '--short', 'HEAD').strip()
+    return git('rev-list', '--count', 'HEAD', _cwd=folder).strip() + '-' + git('rev-parse', '--short', 'HEAD', _cwd=folder).strip()
 
 def get_eluthia_version_of(file):
     # Need to set GIT_PAGER as blank, or else the output will be something like:
@@ -56,9 +55,9 @@ def get_eluthia_version_of(file):
     # instead of just:
     #
     #   4d735de
-    commit_id = git('log', '-n', 1, '--format=%h', '--', file, _env={'GIT_PAGER': ''}).strip()
+    commit_id = git('log', '-n', 1, '--format=%h', '--', file, _env={'GIT_PAGER': ''}, _cwd=os.path.dirname(file)).strip()
 
-    commit_number = git('rev-list', '--count', commit_id).strip()
+    commit_number = git('rev-list', '--count', commit_id, _cwd=os.path.dirname(file)).strip()
     return commit_number + '-' + commit_id
 
 def determine_version(build_py_path, app):

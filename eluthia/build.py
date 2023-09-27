@@ -14,13 +14,16 @@ import sys
 
 from constants import GIT
 import canonical_json
+from functional import pipe
 
 VALID_DEBIAN_PACKAGE_NAME = re.compile('^[a-z0-9-+.]+$')
 
+def load_module_from_path(package_name, build_py_path):
+    return SourceFileLoader(package_name + "_build_module", build_py_path).load_module()
+
 def get_builds(folder):
     for package_name in os.listdir(folder):
-        build_py_path = os.path.abspath(os.path.join(folder, package_name, 'build.py'))
-        yield package_name, build_py_path, SourceFileLoader("build_file", build_py_path).load_module()
+        yield package_name, os.path.abspath(os.path.join(folder, package_name, 'build.py'))
 
 def flatten_paths(d, l = ()):
     if type(d) is dict:
@@ -67,15 +70,18 @@ def determine_version(build_py_path, app):
 
     return get_eluthia_version_of(build_py_path)
 
-def build_app(build_py_path, app, clean_git_folder):
+def create_clean_git_folder(app):
+    clean_git_folder = app['clean_git_folder']
     if clean_git_folder:
+        makedirs(clean_git_folder)
         git.clone(app['folder'], clean_git_folder)
+    return app
+
+def build_app(app):
     return {
         **app,
-        'version': determine_version(build_py_path, app),
         'app_config_version': md5(canonical_json.dumps(app).encode()).hexdigest(),
         'port': 9999,
-        'clean_git_folder': clean_git_folder,
     }
 
 def makedirs(path):
@@ -99,16 +105,28 @@ if __name__ == '__main__':
     makedirs(f'{build_folder}/zipapp/')
     shutil.copy(f'{os.path.abspath(os.path.dirname(__file__))}/zipapp_script.py', f'{build_folder}/zipapp/__main__.py')
 
-    all_apps_config = {
-        package_name: build_app(
-            build_py_path,
-            apps.config[package_name],
-            makedirs(os.path.join(build_folder, 'clean_git', package_name)) if apps.config[package_name]['folder_type'] is GIT else None)
-        for package_name, build_py_path, _build in get_builds(os.environ['MACHINE_FOLDER'])
-    }
+    machine_builds = dict(get_builds(os.environ['MACHINE_FOLDER']))
 
-    for package_name, _build_py_path, build in get_builds(os.environ['MACHINE_FOLDER']):
-        app = all_apps_config[package_name]
+    all_apps_config = {
+        package_name: pipe(
+            build_app,
+            lambda app: {
+                'package_name': package_name,
+                **app,
+                **({'build_module_path': machine_builds[package_name]} if 'build_module_path' not in app else {}),
+                'clean_git_folder': os.path.join(build_folder, 'clean_git', package_name) if app['folder_type'] is GIT else None,
+            },
+            lambda app: {
+                **app,
+                'build_module': load_module_from_path(package_name, app['build_module_path']),
+                'version': determine_version(app['build_module_path'], app),
+            },
+            create_clean_git_folder,
+        )(initial_config)
+        for package_name, initial_config in apps.config.items()
+    }
+    for package_name, app in all_apps_config.items():
+        build = app['build_module']
         tree = build.get_package_tree(package_name, all_apps_config)
         full_package_name = '-'.join((package_name, app['version'], app['app_config_version']))
 

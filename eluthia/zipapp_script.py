@@ -112,7 +112,9 @@ def install_packages(packages):
     Input:
         list new_packages - new packages to be installed
     """
-    install_command = ['dpkg', '--skip-same-version', '-i'] + packages
+    # Using 'apt install' instead of 'dpkg -i' because 'dpkg -i' does not
+    # automaticall install dependencies
+    install_command = ['apt', 'install'] + packages
     subprocess.run(install_command, check=True)
     return
 

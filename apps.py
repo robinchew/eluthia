@@ -9,7 +9,7 @@ config = {
         'folder': '../badtrack',
         'env': {
             'HISTORY_FOLDER': '/var/lib/badtrack/history',
-            'CACHE_FOLDER': '/var/lib/badtrack/cache',
+            'CACHE_FOLDER': '/NON_EXISTENT_FOLDER', # Remove once badtrack can run without setting CACHE_FOLDER
             'EMAIL_HOST': os.environ.get('EMAIL_HOST', 'relay.mailbaby.net'),
             'EMAIL_PORT': os.environ.get('EMAIL_PORT', '465'),
             'EMAIL_TO': os.environ.get('EMAIL_TO', 'robinchew@gmail.com'),

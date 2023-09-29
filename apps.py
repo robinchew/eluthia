@@ -18,6 +18,18 @@ config = {
             'EMAIL_USER': os.environ['EMAIL_USER'],
         },
     },
+    'check-ssl': {
+        'folder_type': GIT,
+        'folder': '../check-ssl',
+        'build_module_relpath': 'build.py',
+        'env': {
+            'EMAIL_HOST': os.environ.get('EMAIL_HOST', 'relay.mailbaby.net'),
+            'EMAIL_TO': os.environ.get('EMAIL_TO', 'robinchew@gmail.com'),
+            'EMAIL_FROM': 'sender@obsi.com.au',
+            'EMAIL_USERNAME': os.environ['EMAIL_USER'],
+            'EMAIL_PASSWORD': os.environ['EMAIL_PASSWORD'],
+        },
+    },
     'file-saver': {
         'folder_type': GIT,
         'folder': '../file_saver',

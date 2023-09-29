@@ -33,3 +33,9 @@ def format_nginx_conf(conf, indent_size, indent_multiplier=0):
 
 def nginx(tuples):
     return '\n'.join(format_nginx_conf(tup, INDENT_SIZE) for tup in tuples)
+
+def cron_line(command, minute = '*', hour = '*', date = '*', month = '*', weekday ='*', user = 'root'):
+    return ' '.join(map(str, (minute, hour, date, month, weekday, user))) + ' ' + command
+
+def cron(lines):
+    return '\n'.join(cron_line(**d) for d in lines)

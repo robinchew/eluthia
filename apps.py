@@ -21,7 +21,7 @@ config = {
     'file-saver': {
         'folder_type': GIT,
         'folder': '../file_saver',
-        'build_module_path': '../file_saver/build.py',
+        'build_module_relpath': 'build.py',
         'env': {
             'SMTP_USERNAME': os.environ['EMAIL_USER'],
             'SMTP_PASSWORD': os.environ['EMAIL_PASSWORD'],
@@ -48,7 +48,6 @@ config = {
 config = {
     k: {
         **d,
-        **({'build_module_path': os.path.abspath(os.path.join(HERE, d['build_module_path']))} if 'build_module_path' in d else {}),
         'folder': os.path.abspath(os.path.join(HERE, d['folder'])),
     }
     for k, d in config.items()

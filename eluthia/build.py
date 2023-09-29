@@ -76,12 +76,15 @@ def create_clean_git_folder(app):
         git.clone(app['folder'], clean_git_folder)
     return app
 
-def build_app(app):
-    return {
-        **app,
-        'app_config_version': md5(canonical_json.dumps(app).encode()).hexdigest(),
-        'port': 9999,
-    }
+def validate_app(app):
+    assert 'build_module_path' not in app, 'Apps config should not set \'build_module_path\' because it is only set by eluthia/build.py. Use \'build_module_relpath\' instead.'
+    if 'build_module_relpath' in app:
+        assert not app['build_module_relpath'].startswith('/'), 'Relative path cannot start with /'
+    return app
+
+def print_app(app):
+    print(app)
+    return app
 
 def makedirs(path):
     os.makedirs(path, exist_ok=True)
@@ -108,19 +111,35 @@ if __name__ == '__main__':
 
     all_apps_config = {
         package_name: pipe(
-            build_app,
+            validate_app,
+            lambda app: {
+                **app,
+                'app_config_version': md5(canonical_json.dumps(app).encode()).hexdigest(),
+                'port': 9999,
+            },
             lambda app: {
                 'package_name': package_name,
                 **app,
-                **({'build_module_path': machine_builds[package_name]} if 'build_module_path' not in app else {}),
                 'clean_git_folder': os.path.join(build_folder, 'clean_git', package_name) if app['folder_type'] is GIT else None,
+            },
+            create_clean_git_folder,
+            lambda app : {
+                **app,
+                '_app_folder': app['clean_git_folder'] or app['folder'],
+            },
+            lambda app: {
+                **app,
+                **({'build_module_path': os.path.abspath(os.path.join(app['_app_folder'], app['build_module_relpath']))} if 'build_module_relpath' in app else {})
+            },
+            lambda app: {
+                **app,
+                **({'build_module_path': machine_builds[package_name]} if 'build_module_path' not in app else {}),
             },
             lambda app: {
                 **app,
                 'build_module': load_module_from_path(package_name, app['build_module_path']),
                 'version': determine_version(app['build_module_path'], app),
             },
-            create_clean_git_folder,
         )(initial_config)
         for package_name, initial_config in apps.config.items()
     }

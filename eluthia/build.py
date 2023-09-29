@@ -79,7 +79,7 @@ def create_clean_git_folder(app):
 def validate_app(app):
     assert 'build_module_path' not in app, 'Apps config should not set \'build_module_path\' because it is only set by eluthia/build.py. Use \'build_module_relpath\' instead.'
     if 'build_module_relpath' in app:
-        assert not app['build_module_relpath'].startswith('/'), 'Relative path cannot start with /'
+        assert app['build_module_relpath'][0] not in ('.', '/'), 'Relative path cannot start with . or /'
     return app
 
 def print_app(app):

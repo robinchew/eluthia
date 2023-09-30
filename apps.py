@@ -30,6 +30,16 @@ config = {
             'EMAIL_PASSWORD': os.environ['EMAIL_PASSWORD'],
         },
     },
+    'chat': {
+        'folder_type': GIT,
+        'folder': '../chat',
+        'build_module_relpath': 'build.py',
+        'env': {
+            'WS_PROTOCOL': 'ws',
+            'WS_HOST': 'chat.robin.au',
+            'WS_PORT': 9000,
+        },
+    },
     'file-saver': {
         'folder_type': GIT,
         'folder': '../file_saver',

@@ -7,6 +7,8 @@ import tempfile
 from textwrap import dedent
 import re
 from sh import git, pushd, ErrorReturnCode_128
+
+from operator import itemgetter
 import subprocess
 import zipapp
 import shutil
@@ -17,6 +19,14 @@ import canonical_json
 from functional import pipe
 
 VALID_DEBIAN_PACKAGE_NAME = re.compile('^[a-z0-9-+.]+$')
+
+def try_different_args(f, different_args):
+    for args in different_args:
+        try:
+            return f(*args)
+        except TypeError:
+            pass
+    raise Exception("Could not execute '{}' with valid arguments".format(f.__name__))
 
 def load_module_from_path(package_name, build_py_path):
     return SourceFileLoader(package_name + "_build_module", build_py_path).load_module()
@@ -94,6 +104,23 @@ def verify_apps_config(config):
     for key in config:
         assert VALID_DEBIAN_PACKAGE_NAME.match(key), f"'{key}' contains invalid characters for a Debian package name"
 
+def validate_machine(machine):
+    port_numbers = set(map(itemgetter(0), machine['ports_map']))
+    port_names = set(map(itemgetter(1), machine['ports_map']))
+
+    assert len(port_numbers) == len(port_names) == len(machine['ports_map']), 'All port numbers, and all port names  must be unique'
+
+    return machine
+
+def build_machine_config(machine):
+    return {
+        **validate_machine(machine),
+        'port_by_name': {
+            port_name: port_num
+            for port_num, port_name in machine['ports_map']
+        }
+    }
+
 if __name__ == '__main__':
     apps = SourceFileLoader("apps", os.environ['APPS_PY']).load_module()
     verify_apps_config(apps.config)
@@ -108,6 +135,14 @@ if __name__ == '__main__':
     shutil.copy(f'{os.path.abspath(os.path.dirname(__file__))}/zipapp_script.py', f'{build_folder}/zipapp/__main__.py')
 
     machine_builds = dict(get_builds(os.environ['MACHINE_FOLDER']))
+    machine_name = os.environ['MACHINE']
+
+    all_machines = {
+        machine_name: build_machine_config(d)
+        for machine_name, d in apps.machines.items()
+    }
+
+    assert machine_name in all_machines, f"{os.environ['MACHINE']} does not exist in machines in config"
 
     all_apps_config = {
         package_name: pipe(
@@ -145,12 +180,16 @@ if __name__ == '__main__':
     }
     for package_name, app in all_apps_config.items():
         build = app['build_module']
-        tree = build.get_package_tree(package_name, all_apps_config)
+        different_args = (
+            (package_name, all_apps_config, machine_name, all_machines),
+            (package_name, all_apps_config),
+        )
+        tree = try_different_args(build.get_package_tree, different_args)
         full_package_name = '-'.join((package_name, app['version'], app['app_config_version']))
 
         for path, f in flatten_lists(flatten_paths(tree)):
             full_path = (build_folder, full_package_name, *path)
-            f(full_path, package_name, all_apps_config)
+            try_different_args(f, [(full_path,) + args for args in different_args])
 
         if not skip_deb: # Build debian packages and put in zipapp directory
             subprocess.run(["dpkg-deb", "--build", f"{build_folder}/{full_package_name}"],check=True)

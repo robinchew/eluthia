@@ -31,10 +31,6 @@ def try_different_args(f, different_args):
 def load_module_from_path(package_name, build_py_path):
     return SourceFileLoader(package_name + "_build_module", build_py_path).load_module()
 
-def get_builds(folder):
-    for package_name in os.listdir(folder):
-        yield package_name, os.path.abspath(os.path.join(folder, package_name, 'build.py'))
-
 def flatten_paths(d, l = ()):
     if type(d) is dict:
         return [
@@ -134,7 +130,6 @@ if __name__ == '__main__':
     makedirs(f'{build_folder}/zipapp/')
     shutil.copy(f'{os.path.abspath(os.path.dirname(__file__))}/zipapp_script.py', f'{build_folder}/zipapp/__main__.py')
 
-    machine_builds = dict(get_builds(os.environ['MACHINE_FOLDER']))
     machine_name = os.environ['MACHINE']
 
     all_machines = {
@@ -164,11 +159,7 @@ if __name__ == '__main__':
             },
             lambda app: {
                 **app,
-                **({'build_module_path': os.path.abspath(os.path.join(app['_app_folder'], app['build_module_relpath']))} if 'build_module_relpath' in app else {})
-            },
-            lambda app: {
-                **app,
-                **({'build_module_path': machine_builds[package_name]} if 'build_module_path' not in app else {}),
+                'build_module_path': os.path.abspath(os.path.join(app['_app_folder'], app.get('build_module_relpath', 'build.py')))
             },
             lambda app: {
                 **app,

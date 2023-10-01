@@ -114,7 +114,7 @@ def install_packages(packages):
     """
     # Using 'apt install' instead of 'dpkg -i' because 'dpkg -i' does not
     # automaticall install dependencies
-    install_command = ['apt', 'install'] + packages
+    install_command = ['apt', 'install', '-y'] + packages
     subprocess.run(install_command, check=True)
     return
 

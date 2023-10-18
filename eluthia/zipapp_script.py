@@ -9,6 +9,10 @@ class InstallationError(Exception): # Used to signify that installation / verifi
     pass
 
 
+def get_temp_folder():
+    with tempfile.TemporaryDirectory() as folder:
+        return folder
+
 def get_version(package, deb_file=False):
     """
     Get the version of a package or verify that it is installed
@@ -173,7 +177,7 @@ def main(OLD_DEB_PATH, NEW_DEB_PATH):
 
 
 if __name__ == '__main__':
-    UNPACK_PATH = os.environ.get("UNPACK_PATH", f'{os.getcwd()}/zip_unpack')
+    UNPACK_PATH = os.environ["UNPACK_PATH"] if 'UNPACK_PATH' in os.environ else get_temp_folder()
     NEW_DEB_PATH = f'{UNPACK_PATH}/new_debs'
     OLD_DEB_PATH = f'{UNPACK_PATH}/old_debs'
 

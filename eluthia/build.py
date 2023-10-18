@@ -191,5 +191,7 @@ if __name__ == '__main__':
         sys.exit(1)
     else:
         # Create executable archive
-        zipapp.create_archive(f'{build_folder}/zipapp', f'{build_folder}/zipapp.pyz', '/usr/bin/python3')
-        subprocess.run(['chmod', '+x', f'{build_folder}/zipapp.pyz'])
+        bundle_version = md5(''.join(app['app_config_version'] for app in all_apps_config.values()).encode()).hexdigest()
+        file_name = 'install-' + bundle_version + '.pyz'
+        zipapp.create_archive(f'{build_folder}/zipapp', f'{build_folder}/{file_name}', '/usr/bin/python3')
+        subprocess.run(['chmod', '+x', f'{build_folder}/{file_name}'])

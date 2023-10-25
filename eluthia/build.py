@@ -1,3 +1,4 @@
+from datetime import datetime
 from functools import reduce
 from hashlib import md5
 import importlib
@@ -192,6 +193,6 @@ if __name__ == '__main__':
     else:
         # Create executable archive
         bundle_version = md5(''.join(app['app_config_version'] for app in all_apps_config.values()).encode()).hexdigest()
-        file_name = 'install-' + bundle_version + '.pyz'
+        file_name = 'install-' + bundle_version + '-' + datetime.now().strftime('%Y-%m-%d_%H%M') + '.pyz'
         zipapp.create_archive(f'{build_folder}/zipapp', f'{build_folder}/{file_name}', '/usr/bin/python3')
         subprocess.run(['chmod', '+x', f'{build_folder}/{file_name}'])

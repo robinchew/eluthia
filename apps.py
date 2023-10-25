@@ -4,6 +4,14 @@ from eluthia.constants import GIT, NORMAL
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 config = {
+    'robin-com-au': {
+        'folder_type': GIT,
+        'folder': '../robin.com.au',
+        'build_module_relpath': 'build.py',
+        'env': {
+            'VENV_BUILD_PATH': os.environ['VENV_BUILD_PATH'],
+        },
+    },
     'badtrack': {
         'folder_type': GIT,
         'folder': '../badtrack',

@@ -3,6 +3,7 @@ import subprocess
 import zipfile
 import os
 import time
+import tempfile
 
 
 class InstallationError(Exception): # Used to signify that installation / verification failed and we should roll back

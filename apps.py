@@ -8,6 +8,7 @@ config = {
         'folder_type': GIT,
         'folder': '../robin.com.au',
         'build_module_relpath': 'build.py',
+        'https_domains': ['www.robin.com.au'],
         'env': {
             'VENV_BUILD_PATH': os.environ['VENV_BUILD_PATH'],
         },

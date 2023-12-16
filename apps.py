@@ -73,6 +73,7 @@ machines = {
     'orchid-inca': {
         'ports_map': [
             (4555, 'file_saver_server'),
+            (4556, 'ozm_api_server'),
             (9000, 'chat_server'),
         ],
     }

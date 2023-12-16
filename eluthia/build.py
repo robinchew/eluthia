@@ -14,6 +14,7 @@ import subprocess
 import zipapp
 import shutil
 import sys
+from types import SimpleNamespace
 
 from constants import GIT
 import canonical_json
@@ -179,9 +180,26 @@ if __name__ == '__main__':
         tree = try_different_args(build.get_package_tree, different_args)
         full_package_name = '-'.join((package_name, app['version'], app['app_config_version']))
 
+        def abs_path(*path):
+            d = tree
+            for name in path:
+                d = d[name]
+            return '/' + os.path.join(*path)
+
+        def build_path(*path):
+            d = tree
+            for name in path:
+                d = d[name]
+            return os.path.join(build_folder, full_package_name, *path)
+
+        path_obj = SimpleNamespace(abs=abs_path, of_build=build_path)
+
         for path, f in flatten_lists(flatten_paths(tree)):
             full_path = (build_folder, full_package_name, *path)
-            try_different_args(f, [(full_path,) + args for args in different_args])
+            try_different_args(f, [
+                (full_path, path_obj, package_name, all_apps_config, machine_name, all_machines),
+                *((full_path,) + args for args in different_args)
+            ])
 
         if not skip_deb: # Build debian packages and put in zipapp directory
             subprocess.run(["dpkg-deb", "--build", f"{build_folder}/{full_package_name}"],check=True)

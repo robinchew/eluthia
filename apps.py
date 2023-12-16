@@ -60,6 +60,18 @@ config = {
     #    'folder_type': GIT,
     #    'folder': '../fueltrack',
     #},
+    'ozmeetup': {
+        'domain': 'demo.robin.au',
+        'folder_type': GIT,
+        'folder': '../ozmeetup',
+        'build_module_relpath': 'build.py',
+        'env': {
+            'DB_HOST': 'localhost',
+            'DB_NAME': 'ozm_db',
+            'DB_USER': 'db_user',
+            'DB_PASSWORD': os.environ['OZM_DB_PASSWORD'],
+        },
+    },
 }
 config = {
     k: {

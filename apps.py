@@ -61,11 +61,12 @@ config = {
     #    'folder': '../fueltrack',
     #},
     'ozmeetup': {
-        'domain': 'demo.robin.au',
         'folder_type': GIT,
         'folder': '../ozmeetup',
         'build_module_relpath': 'build.py',
         'env': {
+            'PUBLIC_HOST': 'demo.robin.au',
+            'PUBLIC_PORT': 80,
             'DB_HOST': 'localhost',
             'DB_NAME': 'ozm_db',
             'DB_USER': 'db_user',

@@ -120,7 +120,8 @@ def build_machine_config(machine):
     }
 
 if __name__ == '__main__':
-    apps = SourceFileLoader("apps", os.environ['APPS_PY']).load_module()
+    app_name = os.path.basename(os.environ['APPS_PY']).rsplit('.', 1)[0]
+    apps = SourceFileLoader(app_name, os.environ['APPS_PY']).load_module()
     verify_apps_config(apps.config)
 
     build_folder = os.environ.get('BUILD_FOLDER', get_temp_folder())

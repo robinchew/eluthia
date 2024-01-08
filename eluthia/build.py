@@ -119,6 +119,17 @@ def build_machine_config(machine):
         }
     }
 
+def setup_certbot(commands):
+    username = "root"
+    host = "museum-plato.bnr.la"
+    ssh_command = f"ssh {username}@{host}"
+
+    try:
+        # Execute the SSH command with multiple commands
+        subprocess.run(f"{ssh_command} << EOF\n{commands}\nEOF", shell=True, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing the SSH command: {e}")
+
 if __name__ == '__main__':
     app_name = os.path.basename(os.environ['APPS_PY']).rsplit('.', 1)[0]
     apps = SourceFileLoader(app_name, os.environ['APPS_PY']).load_module()
@@ -215,3 +226,14 @@ if __name__ == '__main__':
         file_name = 'install-' + bundle_version + '-' + datetime.now().strftime('%Y-%m-%d_%H%M') + '.pyz'
         zipapp.create_archive(f'{build_folder}/zipapp', f'{build_folder}/{file_name}', '/usr/bin/python3')
         subprocess.run(['chmod', '+x', f'{build_folder}/{file_name}'])
+
+    commands_to_run = """
+        sudo apt install snapd
+        sudo apt-get remove certbot
+        sudo snap install --classic certbot
+        sudo ln -s /snap/bin/certbot /usr/bin/certbot
+        1 | sudo certbot --nginx
+        sudo certbot renew --dry-run
+    """
+
+    setup_certbot(commands_to_run)

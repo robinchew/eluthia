@@ -3,6 +3,21 @@ from eluthia.constants import GIT, NORMAL
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
+def create_build_folder(folder_name):
+    try:
+        os.makedirs(folder_name)
+
+    except FileExistsError:
+        pass
+
+    folder_path = os.path.abspath(folder_name)
+
+    return folder_path
+
+folder_name = "build_folder"
+fpath = create_build_folder(folder_name)
+os.environ['BUILD_FOLDER'] = fpath
+
 config = {
     'robin-com-au': {
         'folder_type': GIT,
@@ -40,39 +55,39 @@ config = {
             'EMAIL_PASSWORD': os.environ['EMAIL_PASSWORD'],
         },
     },
-    'chat': {
-        'folder_type': GIT,
-        'folder': '../chat',
-        'build_module_relpath': 'build.py',
-        'env': {},
-    },
-    'file-saver': {
-        'folder_type': GIT,
-        'folder': '../file_saver',
-        'build_module_relpath': 'build.py',
-        'env': {
-            'SMTP_USERNAME': os.environ['EMAIL_USER'],
-            'SMTP_PASSWORD': os.environ['EMAIL_PASSWORD'],
-            'TOTP_SECRET': os.environ['TOTP_SECRET'],
-        },
-    },
+    # 'chat': {
+    #     'folder_type': GIT,
+    #     'folder': '../chat',
+    #     'build_module_relpath': 'build.py',
+    #     'env': {},
+    # },
+    # 'file-saver': {
+    #     'folder_type': GIT,
+    #     'folder': '../file_saver',
+    #     'build_module_relpath': 'build.py',
+    #     'env': {
+    #         'SMTP_USERNAME': os.environ['EMAIL_USER'],
+    #         'SMTP_PASSWORD': os.environ['EMAIL_PASSWORD'],
+    #         'TOTP_SECRET': os.environ['TOTP_SECRET'],
+    #     },
+    # },
     #'fuel': {
     #    'folder_type': GIT,
     #    'folder': '../fueltrack',
     #},
-    'ozmeetup': {
-        'folder_type': GIT,
-        'folder': '../ozmeetup',
-        'build_module_relpath': 'build.py',
-        'env': {
-            'PUBLIC_HOST': 'demo.robin.au',
-            'PUBLIC_PORT': 80,
-            'DB_HOST': 'localhost',
-            'DB_NAME': 'ozm_db',
-            'DB_USER': 'db_user',
-            'DB_PASSWORD': os.environ['OZM_DB_PASSWORD'],
-        },
-    },
+    # 'ozmeetup': {
+    #     'folder_type': GIT,
+    #     'folder': '../ozmeetup',
+    #     'build_module_relpath': 'build.py',
+    #     'env': {
+    #         'PUBLIC_HOST': 'demo.robin.au',
+    #         'PUBLIC_PORT': 80,
+    #         'DB_HOST': 'localhost',
+    #         'DB_NAME': 'ozm_db',
+    #         'DB_USER': 'db_user',
+    #         'DB_PASSWORD': os.environ['OZM_DB_PASSWORD'],
+    #     },
+    # },
 }
 config = {
     k: {

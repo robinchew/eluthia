@@ -54,6 +54,12 @@ config = {
             'SMTP_USERNAME': UNSET,
             'SMTP_PASSWORD': UNSET,
             'TOTP_SECRET': UNSET,
+            'DOMAIN_MAP': {
+                'VIEW': 'view.robin.au',
+                'EDIT': 'edit.robin.au',
+                'POC': 'secure.robin.au',
+                'SERVER': 'txt.robin.au',
+            },
         },
     },
     #'fuel': {

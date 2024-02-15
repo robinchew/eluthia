@@ -1,5 +1,5 @@
 import os
-from eluthia.constants import GIT, NORMAL
+from eluthia.constants import GIT, NORMAL, UNSET
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -10,7 +10,7 @@ config = {
         'build_module_relpath': 'build.py',
         'https_domains': ['www.robin.com.au'],
         'env': {
-            'VENV_BUILD_PATH': os.environ['VENV_BUILD_PATH'],
+            'VENV_BUILD_PATH': UNSET,
         },
     },
     'badtrack': {
@@ -20,12 +20,12 @@ config = {
         'env': {
             'HISTORY_FOLDER': '/var/lib/badtrack/history',
             'CACHE_FOLDER': '/NON_EXISTENT_FOLDER', # Remove once badtrack can run without setting CACHE_FOLDER
-            'EMAIL_HOST': os.environ.get('EMAIL_HOST', 'relay.mailbaby.net'),
-            'EMAIL_PORT': os.environ.get('EMAIL_PORT', '465'),
-            'EMAIL_TO': os.environ.get('EMAIL_TO', 'robinchew@gmail.com'),
+            'EMAIL_HOST': UNSET,
+            'EMAIL_PORT': 465,
+            'EMAIL_TO': 'robinchew@gmail.com',
             'EMAIL_FROM': 'sender@obsi.com.au',
-            'EMAIL_PASSWORD': os.environ['EMAIL_PASSWORD'],
-            'EMAIL_USER': os.environ['EMAIL_USER'],
+            'EMAIL_PASSWORD': UNSET,
+            'EMAIL_USER': UNSET,
         },
     },
     'check-ssl': {
@@ -33,11 +33,11 @@ config = {
         'folder': '../check-ssl',
         'build_module_relpath': 'build.py',
         'env': {
-            'EMAIL_HOST': os.environ.get('EMAIL_HOST', 'relay.mailbaby.net'),
-            'EMAIL_TO': os.environ.get('EMAIL_TO', 'robinchew@gmail.com'),
+            'EMAIL_HOST': UNSET,
+            'EMAIL_TO': 'robinchew@gmail.com',
             'EMAIL_FROM': 'sender@obsi.com.au',
-            'EMAIL_USERNAME': os.environ['EMAIL_USER'],
-            'EMAIL_PASSWORD': os.environ['EMAIL_PASSWORD'],
+            'EMAIL_USERNAME': UNSET,
+            'EMAIL_PASSWORD': UNSET,
         },
     },
     'chat': {
@@ -51,9 +51,9 @@ config = {
         'folder': '../file_saver',
         'build_module_relpath': 'build.py',
         'env': {
-            'SMTP_USERNAME': os.environ['EMAIL_USER'],
-            'SMTP_PASSWORD': os.environ['EMAIL_PASSWORD'],
-            'TOTP_SECRET': os.environ['TOTP_SECRET'],
+            'SMTP_USERNAME': UNSET,
+            'SMTP_PASSWORD': UNSET,
+            'TOTP_SECRET': UNSET,
         },
     },
     #'fuel': {
@@ -70,7 +70,7 @@ config = {
             'DB_HOST': 'localhost',
             'DB_NAME': 'ozm_db',
             'DB_USER': 'db_user',
-            'DB_PASSWORD': os.environ['OZM_DB_PASSWORD'],
+            'DB_PASSWORD': UNSET,
         },
     },
 }

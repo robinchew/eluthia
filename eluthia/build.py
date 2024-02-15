@@ -10,13 +10,14 @@ import re
 from sh import git, pushd, ErrorReturnCode_128
 
 from operator import itemgetter
+from pprint import pprint
 import subprocess
 import zipapp
 import shutil
 import sys
 from types import SimpleNamespace
 
-from constants import GIT
+from constants import GIT, UNSET
 import canonical_json
 from functional import pipe
 
@@ -101,6 +102,15 @@ def makedirs(path):
 def verify_apps_config(config):
     for key in config:
         assert VALID_DEBIAN_PACKAGE_NAME.match(key), f"'{key}' contains invalid characters for a Debian package name"
+
+    unset_tuple = tuple(
+        path_tuple
+        for path_tuple, value in flatten_lists(flatten_paths(config))
+        if value is UNSET)
+
+    if unset_tuple:
+        pprint(unset_tuple)
+        raise Exception('config has UNSET values')
 
 def validate_machine(machine):
     port_numbers = set(map(itemgetter(0), machine['ports_map']))

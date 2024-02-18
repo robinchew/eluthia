@@ -43,5 +43,6 @@ def cp_if_not_exist(*args, **kwargs):
     '''
 
 def empty_file(full_path, *args, **kwargs):
+    os.makedirs(os.path.join(*full_path[0:-1]), exist_ok=True)
     with open(os.path.join(*full_path), 'w'):
         pass

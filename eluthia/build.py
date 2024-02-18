@@ -24,11 +24,18 @@ from functional import pipe
 VALID_DEBIAN_PACKAGE_NAME = re.compile('^[a-z0-9-+.]+$')
 
 def try_different_args(f, different_args):
+    e_list = []
     for args in different_args:
         try:
             return f(*args)
-        except TypeError:
-            pass
+        except TypeError as e:
+            if 'positional arguments' in str(e):
+                e_list.append(e)
+            else:
+                raise
+
+    for e in e_list:
+        print(e)
     raise Exception("Could not execute '{}' with valid arguments".format(f.__name__))
 
 def load_module_from_path(package_name, build_py_path):
@@ -135,7 +142,7 @@ if __name__ == '__main__':
     verify_apps_config(apps.config)
 
     build_folder = os.environ.get('BUILD_FOLDER', get_temp_folder())
-    print('Build_folder:', build_folder)
+    print('Build folder:', build_folder)
 
     skip_deb = 'SKIP_DEB' in os.environ
 

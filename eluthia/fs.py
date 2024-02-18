@@ -1,5 +1,5 @@
 import os
-from eluthia.decorators import file
+from eluthia.decorators import chmod, file
 
 FILE = lambda: None
 
@@ -16,6 +16,7 @@ def pick(folder, d, last=''):
         for k, v in d.items()
     }
 
+@chmod(0o755)
 @file
 def cp_if_not_exist(*args, **kwargs):
     return '''\

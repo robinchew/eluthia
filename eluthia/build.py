@@ -3,6 +3,7 @@ from functools import reduce
 from hashlib import md5
 import importlib
 from importlib.machinery import SourceFileLoader
+import json
 import os
 import tempfile
 from textwrap import dedent
@@ -21,7 +22,44 @@ from constants import GIT, UNSET
 import canonical_json
 from functional import pipe
 
+NO_CHANGE = False
+CHANGED = True
 VALID_DEBIAN_PACKAGE_NAME = re.compile('^[a-z0-9-+.]+$')
+
+def list_dir_full_path(path):
+    for file_name in os.listdir(path):
+        yield os.path.join(path, file_name)
+
+def now_version():
+    return datetime.now().strftime('%Y-%m-%d_%H%M')
+
+def extract_app_config(bundle, file_name, app_config):
+    new_app_config = getattr(bundle, 'update_app_config', lambda ac: ac)(app_config)
+    actual_md5_version = md5(canonical_json.dumps(new_app_config).encode()).hexdigest()
+    splitted = file_name.split('_')
+
+    app_name, num_version, md5_version = {
+        1: lambda: (splitted[0], 0, None),
+        3: lambda: (splitted[0], int(splitted[1]), splitted[2]),
+    }[len(splitted)]()
+
+    return (
+        app_name,
+        # Increment num_version when md5 version changes from filename
+        num_version + 1 if md5_version != actual_md5_version else num_version,
+        actual_md5_version,
+        new_app_config,
+        md5_version != actual_md5_version, # config has changed
+    )
+
+assert extract_app_config(None, 'file-saver', {'abc': 1}) == ('file-saver', 1, '35aa17374cf016b32a3e3aa23caa0e5e', {'abc': 1}, CHANGED)
+assert extract_app_config(None, 'file-saver_11_35aa17374cf016b32a3e3aa23caa0e5e', {'abc': 1}) == ('file-saver', 11, '35aa17374cf016b32a3e3aa23caa0e5e', {'abc': 1}, NO_CHANGE)
+assert extract_app_config(None, 'file-saver_6_abc123', {'abc': 1}) == ('file-saver', 7, '35aa17374cf016b32a3e3aa23caa0e5e', {'abc': 1}, CHANGED)
+
+def extract_app_config_from_path(bundle, app_path):
+    file_name = os.path.basename(app_path).split('.', 1)[0]
+    app = SourceFileLoader(file_name, app_path).load_module()
+    return extract_app_config(bundle, file_name, app.app_config)
 
 def try_different_args(f, different_args):
     e_list = []
@@ -136,10 +174,8 @@ def build_machine_config(machine):
         }
     }
 
-if __name__ == '__main__':
-    app_name = os.path.basename(os.environ['APPS_PY']).rsplit('.', 1)[0]
-    apps = SourceFileLoader(app_name, os.environ['APPS_PY']).load_module()
-    verify_apps_config(apps.config)
+def build(apps_config, machines, machine_name):
+    verify_apps_config(apps_config)
 
     build_folder = os.environ.get('BUILD_FOLDER', get_temp_folder())
     print('Build folder:', build_folder)
@@ -153,8 +189,8 @@ if __name__ == '__main__':
     machine_name = os.environ['MACHINE']
 
     all_machines = {
-        machine_name: build_machine_config(d)
-        for machine_name, d in apps.machines.items()
+        mach_name: build_machine_config(d)
+        for mach_name, d in machines.items()
     }
 
     assert machine_name in all_machines, f"{os.environ['MACHINE']} does not exist in machines in config"
@@ -187,7 +223,7 @@ if __name__ == '__main__':
                 'version': determine_version(app['build_module_path'], app),
             },
         )(initial_config)
-        for package_name, initial_config in apps.config.items()
+        for package_name, initial_config in apps_config.items()
     }
     for package_name, app in all_apps_config.items():
         build = app['build_module']
@@ -232,3 +268,40 @@ if __name__ == '__main__':
         file_name = 'install-' + bundle_version + '-' + datetime.now().strftime('%Y-%m-%d_%H%M') + '.pyz'
         zipapp.create_archive(f'{build_folder}/zipapp', f'{build_folder}/{file_name}', '/usr/bin/python3')
         subprocess.run(['chmod', '+x', f'{build_folder}/{file_name}'])
+
+def iter_bundled_app_configs(bundle, apps_folder):
+    for file_name in (path for path in list_dir_full_path(apps_folder) if os.path.isfile(path) and path.endswith('.py')):
+        app_path = os.path.join(apps_folder, file_name)
+        app_name, version_num, version_md5, app_config, config_changed = extract_app_config_from_path(bundle, app_path)
+
+        if config_changed:
+            new_config_name_without_extension = app_name + '_' + str(version_num) + '_' + version_md5
+            with open(os.path.join(apps_folder, new_config_name_without_extension + '.py'), 'w') as f, \
+                 open(os.path.join(app_path)) as fr:
+                f.write(fr.read())
+            with open(os.path.join(apps_folder, new_config_name_without_extension + '.json'), 'w') as f:
+                json.dump(app_config, f, indent=4)
+
+        yield (app_name, app_config)
+
+def build_apps_config(env):
+    if 'APPS_PY' in env:
+        app_name = os.path.basename(os.environ['APPS_PY']).rsplit('.', 1)[0]
+        apps = SourceFileLoader(app_name, os.environ['APPS_PY']).load_module()
+        return apps.config, apps.machines, env['MACHINE']
+    elif 'APPS_BUNDLE' in env:
+        bundle_root = env['APPS_BUNDLE']
+        bundle_name = os.path.basename(env['APPS_BUNDLE'])
+        apps_folder = os.path.join(bundle_root, 'apps')
+        bundle = SourceFileLoader(bundle_name + '_bundle', os.path.join(bundle_root, 'bundle.py')).load_module()
+        machine = SourceFileLoader(bundle_name + '_machine', os.path.join(bundle_root, 'machine.py')).load_module()
+
+        return (
+            dict(iter_bundled_app_configs(bundle, apps_folder)),
+            {machine.name: {'ports_map': machine.ports_map}},
+            machine.name,
+        )
+    raise Exception('Cannot determine apps_config')
+
+if __name__ == '__main__':
+    build(*build_apps_config(os.environ))

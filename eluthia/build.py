@@ -26,13 +26,6 @@ NO_CHANGE = False
 CHANGED = True
 VALID_DEBIAN_PACKAGE_NAME = re.compile('^[a-z0-9-+.]+$')
 
-def get_git_path(package_name):
-    HERE = os.path.abspath(os.path.dirname(__file__))
-    return {
-        'file-saver': os.path.abspath(os.path.join(HERE, '../../file_saver')),
-        'robin-com-au': os.path.abspath(os.path.join(HERE, '../../robin.com.au')),
-    }[package_name]
-
 def list_dir_full_path(path):
     for file_name in os.listdir(path):
         yield os.path.join(path, file_name)
@@ -173,7 +166,7 @@ def build_machine_config(machine):
         }
     }
 
-def build(apps_config, machines, machine_name):
+def build(find_git_path, apps_config, machines, machine_name):
     verify_apps_config(apps_config)
 
     build_folder = os.environ.get('BUILD_FOLDER', get_temp_folder())
@@ -184,8 +177,6 @@ def build(apps_config, machines, machine_name):
     # Prepare zipapp directory
     makedirs(f'{build_folder}/zipapp/')
     shutil.copy(f'{os.path.abspath(os.path.dirname(__file__))}/zipapp_script.py', f'{build_folder}/zipapp/__main__.py')
-
-    machine_name = os.environ['MACHINE']
 
     all_machines = {
         mach_name: build_machine_config(d)
@@ -207,7 +198,7 @@ def build(apps_config, machines, machine_name):
                 **app,
                 'clean_git_folder': os.path.join(build_folder, 'clean_git', package_name),
             },
-            create_clean_git_folder(get_git_path(package_name)),
+            create_clean_git_folder(find_git_path(package_name)),
             lambda app : {
                 **app,
                 '_app_folder': app['clean_git_folder'],
@@ -219,7 +210,7 @@ def build(apps_config, machines, machine_name):
             lambda app: {
                 **app,
                 'build_module': load_module_from_path(package_name, app['build_module_path']),
-                'version': get_git_version(get_git_path(package_name)),
+                'version': get_git_version(find_git_path(package_name)),
             },
         )(initial_config)
         for package_name, initial_config in apps_config.items()
@@ -303,4 +294,6 @@ def build_apps_config(env):
     raise Exception('Cannot determine apps_config')
 
 if __name__ == '__main__':
-    build(*build_apps_config(os.environ))
+    with open(os.environ['GIT_LOOKUP']) as f:
+        git_lookup = json.load(f)
+    build(git_lookup.get, *build_apps_config(os.environ))

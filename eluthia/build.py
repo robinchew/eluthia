@@ -1,5 +1,5 @@
 from datetime import datetime
-from functools import reduce
+from functools import partial, reduce
 from hashlib import md5
 import importlib
 from importlib.machinery import SourceFileLoader
@@ -25,6 +25,13 @@ from functional import pipe
 NO_CHANGE = False
 CHANGED = True
 VALID_DEBIAN_PACKAGE_NAME = re.compile('^[a-z0-9-+.]+$')
+
+def get_git_path(package_name):
+    HERE = os.path.abspath(os.path.dirname(__file__))
+    return {
+        'file-saver': os.path.abspath(os.path.join(HERE, '../../file_saver')),
+        'robin-com-au': os.path.abspath(os.path.join(HERE, '../../robin.com.au')),
+    }[package_name]
 
 def list_dir_full_path(path):
     for file_name in os.listdir(path):
@@ -114,21 +121,13 @@ def get_eluthia_version_of(file):
     commit_number = git('rev-list', '--count', commit_id, _cwd=os.path.dirname(file)).strip()
     return commit_number + '-' + commit_id
 
-def determine_version(build_py_path, app):
-    if 'version' in app:
-        return app['version']
-
-    if app['folder_type'] is GIT:
-        return get_git_version(app['folder'])
-
-    return get_eluthia_version_of(build_py_path)
-
-def create_clean_git_folder(app):
-    clean_git_folder = app['clean_git_folder']
-    if clean_git_folder:
+def create_clean_git_folder(source_git_folder):
+    def create(app):
+        clean_git_folder = app['clean_git_folder']
         makedirs(clean_git_folder)
-        git.clone(app['folder'], clean_git_folder)
-    return app
+        git.clone(source_git_folder, clean_git_folder)
+        return app
+    return create
 
 def validate_app(app):
     assert 'build_module_path' not in app, 'Apps config should not set \'build_module_path\' because it is only set by eluthia/build.py. Use \'build_module_relpath\' instead.'
@@ -206,12 +205,12 @@ def build(apps_config, machines, machine_name):
             lambda app: {
                 'package_name': package_name,
                 **app,
-                'clean_git_folder': os.path.join(build_folder, 'clean_git', package_name) if app['folder_type'] is GIT else None,
+                'clean_git_folder': os.path.join(build_folder, 'clean_git', package_name),
             },
-            create_clean_git_folder,
+            create_clean_git_folder(get_git_path(package_name)),
             lambda app : {
                 **app,
-                '_app_folder': app['clean_git_folder'] or app['folder'],
+                '_app_folder': app['clean_git_folder'],
             },
             lambda app: {
                 **app,
@@ -220,7 +219,7 @@ def build(apps_config, machines, machine_name):
             lambda app: {
                 **app,
                 'build_module': load_module_from_path(package_name, app['build_module_path']),
-                'version': determine_version(app['build_module_path'], app),
+                'version': get_git_version(get_git_path(package_name)),
             },
         )(initial_config)
         for package_name, initial_config in apps_config.items()

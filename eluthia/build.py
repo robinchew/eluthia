@@ -189,11 +189,6 @@ def build(find_git_path, apps_config, machines, machine_name):
         package_name: pipe(
             validate_app,
             lambda app: {
-                **app,
-                'app_config_version': md5(canonical_json.dumps(app).encode()).hexdigest(),
-                'port': 9999,
-            },
-            lambda app: {
                 'package_name': package_name,
                 **app,
                 'clean_git_folder': os.path.join(build_folder, 'clean_git', package_name),
@@ -210,7 +205,7 @@ def build(find_git_path, apps_config, machines, machine_name):
             lambda app: {
                 **app,
                 'build_module': load_module_from_path(package_name, app['build_module_path']),
-                'version': get_git_version(find_git_path(package_name)),
+                'version': get_git_version(find_git_path(package_name)) + '-' + app['app_config_version'],
             },
         )(initial_config)
         for package_name, initial_config in apps_config.items()
@@ -222,7 +217,7 @@ def build(find_git_path, apps_config, machines, machine_name):
             (package_name, all_apps_config),
         )
         tree = try_different_args(build.get_package_tree, different_args)
-        full_package_name = '-'.join((package_name, app['version'], app['app_config_version']))
+        full_package_name = '-'.join((package_name, app['version']))
 
         def abs_path(*path):
             d = tree
@@ -254,7 +249,7 @@ def build(find_git_path, apps_config, machines, machine_name):
         sys.exit(1)
     else:
         # Create executable archive
-        bundle_version = md5(''.join(app['app_config_version'] for app in all_apps_config.values()).encode()).hexdigest()
+        bundle_version = md5(''.join(app['version'] for app in all_apps_config.values()).encode()).hexdigest()
         file_name = 'install-' + bundle_version + '-' + datetime.now().strftime('%Y-%m-%d_%H%M') + '.pyz'
         zipapp.create_archive(f'{build_folder}/zipapp', f'{build_folder}/{file_name}', '/usr/bin/python3')
         subprocess.run(['chmod', '+x', f'{build_folder}/{file_name}'])
@@ -280,7 +275,7 @@ def iter_bundled_app_configs(bundle, apps_folder):
             print(f"'{app_path}' has been deleted! {new_file_path_no_ext}.(py/json) created.")
             os.remove(app_path)
 
-        yield (app_name, app_config)
+        yield (app_name, {**app_config, 'app_config_version': f'{version_num}-{version_md5}'})
 
 def build_apps_config(env):
     if 'APPS_PY' in env:

@@ -266,11 +266,19 @@ def iter_bundled_app_configs(bundle, apps_folder):
 
         if config_changed:
             new_config_name_without_extension = app_name + '_' + str(version_num) + '_' + version_md5
-            with open(os.path.join(apps_folder, new_config_name_without_extension + '.py'), 'w') as f, \
+            new_file_path_no_ext = os.path.join(apps_folder, new_config_name_without_extension)
+
+            with open(new_file_path_no_ext + '.py', 'w') as f, \
                  open(os.path.join(app_path)) as fr:
                 f.write(fr.read())
-            with open(os.path.join(apps_folder, new_config_name_without_extension + '.json'), 'w') as f:
+
+            with open(new_file_path_no_ext + '.json', 'w') as f:
                 json.dump(app_config, f, indent=4)
+
+            # md5 in the filename no longer matches the containing app_config,
+            # so delete file after the new file has been created above.
+            print(f"'{app_path}' has been deleted! {new_file_path_no_ext}.(py/json) created.")
+            os.remove(app_path)
 
         yield (app_name, app_config)
 

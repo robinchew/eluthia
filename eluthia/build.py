@@ -166,6 +166,69 @@ def build_machine_config(machine):
         }
     }
 
+def create_tree(find_git_path, apps_config):
+    verify_apps_config(apps_config)
+    print('ca', apps_config)
+
+    build_folder = os.environ.get('BUILD_FOLDER', get_temp_folder())
+    print('Build folder:', build_folder)
+
+    git_path = find_git_path(None)
+    print('Git path:', git_path)
+
+    all_apps_config = {
+        package_name: pipe(
+            validate_app,
+            lambda app: {
+                'package_name': package_name,
+                **app,
+                'clean_git_folder': os.path.abspath(git_path),
+            },
+            lambda app : {
+                **app,
+                '_app_folder': app['clean_git_folder'],
+            },
+            lambda app: {
+                **app,
+                'build_module_path': os.path.abspath(os.path.join(git_path, app.get('build_module_relpath', 'build.py')))
+            },
+            lambda app: {
+                **app,
+                'build_module': load_module_from_path(package_name, app['build_module_path']),
+                'version': get_git_version(git_path),
+            },
+        )(initial_config)
+        for package_name, initial_config in apps_config.items()
+    }
+    for package_name, app in all_apps_config.items():
+        build = app['build_module']
+        different_args = (
+            (package_name, all_apps_config),
+        )
+        tree = try_different_args(build.get_package_tree, different_args)
+        full_package_name = '-'.join((package_name, app['version']))
+
+        def abs_path(*path):
+            d = tree
+            for name in path:
+                d = d[name]
+            return '/' + os.path.join(*path)
+
+        def build_path(*path):
+            d = tree
+            for name in path:
+                d = d[name]
+            return os.path.join(build_folder, full_package_name, *path)
+
+        path_obj = SimpleNamespace(abs=abs_path, of_build=build_path)
+
+        for path, f in flatten_lists(flatten_paths(tree)):
+            full_path = (build_folder, full_package_name, *path)
+            try_different_args(f, [
+                (full_path, path_obj, package_name, all_apps_config),
+                (full_path, package_name, all_apps_config),
+            ])
+
 def build(find_git_path, apps_config, machines, machine_name):
     verify_apps_config(apps_config)
 
@@ -297,6 +360,29 @@ def build_apps_config(env):
     raise Exception('Cannot determine apps_config')
 
 if __name__ == '__main__':
+    '''
     with open(os.environ['GIT_LOOKUP']) as f:
         git_lookup = json.load(f)
-    build(git_lookup.get, *build_apps_config(os.environ))
+    '''
+    package_name, git_path = sys.argv[1:]
+    create_tree(
+        lambda _: git_path,
+        {
+            package_name: {
+                # 'folder_type': GIT,
+                # 'folder': '../file_saver',
+                'build_module_relpath': 'build.py',
+                'env': {
+                    #'SMTP_USERNAME': UNSET,
+                    #'SMTP_PASSWORD': UNSET,
+                    #'TOTP_SECRET': UNSET,
+                    'CERT_DOMAIN': 'cert.robin.au',
+                    'DOMAIN_MAP': {
+                        'VIEW': 'view.robin.au',
+                        'EDIT': 'edit.robin.au',
+                        'POC': 'secure.robin.au',
+                        'SERVER': 'txt.robin.au',
+                    },
+                },
+            },
+        })
